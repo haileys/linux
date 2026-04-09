@@ -16,12 +16,12 @@ always-$(KBUILD_BUILTIN) := vmlinux.lds
 
 obj-y = exec.o exitcode.o ksyms.o mem.o \
 	physmem.o process.o ptrace.o reboot.o sigio.o \
-	signal.o sysrq.o time.o trap.o \
+	signal.o sysrq.o trap.o \
 	um_arch.o umid.o kmsg_dump.o capflags.o skas/
 obj-y += load_file.o
 
-obj-os-Linux = config.o irq.o tlb.o
-obj-os-Win9x = irq_win9x.o
+obj-os-Linux = config.o irq.o time.o tlb.o
+obj-os-Win9x = irq_win9x.o time_win9x.o
 
 ifeq ($(CONFIG_WIN9X),y)
 obj-y += $(obj-os-Win9x)
