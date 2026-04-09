@@ -10,12 +10,12 @@
 
 /* if you want SMP support, implement these with real spinlocks */
 .macro IRQ_SAVE reg
-	pushfl
-	cli
+/*	pushfl
+	cli */
 .endm
 
 .macro IRQ_RESTORE reg
-	popfl
+/*	popfl */
 .endm
 
 #define BEGIN_IRQ_SAVE(op) \

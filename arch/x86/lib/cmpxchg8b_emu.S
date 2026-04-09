@@ -22,7 +22,7 @@
 SYM_FUNC_START(cmpxchg8b_emu)
 
 	pushfl
-	cli
+/*	cli */
 
 	cmpl	(%esi), %eax
 	jne	.Lnot_same
@@ -68,7 +68,7 @@ EXPORT_SYMBOL(cmpxchg8b_emu)
 SYM_FUNC_START(this_cpu_cmpxchg8b_emu)
 
 	pushfl
-	cli
+/*	cli */
 
 	cmpl	__percpu (%esi), %eax
 	jne	.Lnot_same2

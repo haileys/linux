@@ -4,7 +4,9 @@
 #include <linux/string.h>
 #include <sys/ucontext.h>
 #include <asm/ptrace.h>
+#define sigcontext __kernel_sigcontext
 #include <asm/sigcontext.h>
+#undef sigcontext
 #include <sysdep/ptrace.h>
 #include <sysdep/mcontext.h>
 #include <arch.h>

@@ -8,6 +8,8 @@
 #include <linux/seccomp.h>
 #include <generated/asm-offsets.h>
 
+#define __NR_close_range 436
+
 void _start(void);
 
 noinline static void real_init(void)

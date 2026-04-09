@@ -17,6 +17,8 @@
 #include <skas.h>
 #include <kern_util.h>
 
+#define __NR_close_range 436
+
 extern void start_kernel(void);
 
 static int __init start_kernel_proc(void *unused)

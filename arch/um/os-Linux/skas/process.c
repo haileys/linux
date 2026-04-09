@@ -34,6 +34,8 @@
 #include <asm-generic/rwonce.h>
 #include "../internal.h"
 
+#define __NR_close_range 436
+
 int is_skas_winch(int pid, int fd, void *data)
 {
 	return pid == getpgrp();

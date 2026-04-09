@@ -37,6 +37,8 @@
 #include <skas.h>
 #include "internal.h"
 
+#define __NR_close_range 436
+
 static void ptrace_child(void)
 {
 	int ret;
