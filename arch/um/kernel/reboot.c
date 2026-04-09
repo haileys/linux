@@ -17,21 +17,31 @@
 void (*pm_power_off)(void);
 EXPORT_SYMBOL(pm_power_off);
 
+static void kill_one_process(struct task_struct *p)
+{
+	struct task_struct *t;
+	t = find_lock_task_mm(p);
+	if (!t)
+		return;
+
+#ifdef CONFIG_WIN9X
+	VMM_THREAD_HANDLE th = t->mm->context.id.th;
+	task_unlock(t);
+	VMMTerminateThread(th);
+#else
+	int pid = t->mm->context.id.pid;
+	task_unlock(t);
+	os_kill_ptraced_process(pid, 1);
+#endif
+}
+
 static void kill_off_processes(void)
 {
 	struct task_struct *p;
-	int pid;
 
 	read_lock(&tasklist_lock);
 	for_each_process(p) {
-		struct task_struct *t;
-
-		t = find_lock_task_mm(p);
-		if (!t)
-			continue;
-		pid = t->mm->context.id.pid;
-		task_unlock(t);
-		os_kill_ptraced_process(pid, 1);
+		kill_one_process(p);
 	}
 	read_unlock(&tasklist_lock);
 }
