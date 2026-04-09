@@ -75,7 +75,11 @@ USER_CFLAGS = $(patsubst $(KERNEL_DEFINES),,$(patsubst -I%,,$(KBUILD_CFLAGS))) \
 		-include $(srctree)/include/linux/kconfig.h
 
 #This will adjust *FLAGS accordingly to the platform.
+ifdef CONFIG_WIN9X
+include $(srctree)/$(ARCH_DIR)/Makefile-os-Win95
+else
 include $(srctree)/$(ARCH_DIR)/Makefile-os-Linux
+endif
 
 KBUILD_CPPFLAGS += -I$(srctree)/$(HOST_DIR)/include \
 		   -I$(srctree)/$(HOST_DIR)/include/uapi \

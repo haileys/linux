@@ -8,7 +8,11 @@
 
 #include <sysdep/ptrace.h>
 
+#ifndef CONFIG_WIN9X
 extern int using_seccomp;
+#else
+static const int using_seccomp = 0;
+#endif
 
 extern void new_thread_handler(void);
 extern void handle_syscall(struct uml_pt_regs *regs);

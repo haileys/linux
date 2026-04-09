@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/* 
+/*
  * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
@@ -46,13 +46,25 @@ void uml_cleanup(void)
 void machine_restart(char * __unused)
 {
 	uml_cleanup();
+#ifdef CONFIG_WIN9X
+	/* TODO machine_restart - implement for Win9x */
+	os_warn("would machine_restart, unimplemented on Win9x");
+	abort();
+#else
 	reboot_skas();
+#endif
 }
 
 void machine_power_off(void)
 {
 	uml_cleanup();
+#ifdef CONFIG_WIN9X
+	/* TODO machine_power_off - implement for Win9x */
+	os_warn("would machine_power_off, unimplemented on Win9x");
+	abort();
+#else
 	halt_skas();
+#endif
 }
 
 void machine_halt(void)

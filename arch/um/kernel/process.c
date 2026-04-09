@@ -185,10 +185,12 @@ int copy_thread(struct task_struct * p, const struct kernel_clone_args *args)
 	return ret;
 }
 
+#ifndef CONFIG_WIN9X
 void initial_thread_cb(void (*proc)(void *), void *arg)
 {
 	initial_thread_cb_skas(proc, arg);
 }
+#endif
 
 int arch_dup_task_struct(struct task_struct *dst,
 			 struct task_struct *src)

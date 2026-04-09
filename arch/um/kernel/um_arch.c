@@ -394,7 +394,9 @@ int __init linux_main(int argc, char **argv, char **envp)
 
 	arch_task_struct_size = sizeof(struct task_struct) + host_fp_size;
 
+#ifndef CONFIG_WIN9X
 	os_flush_stdout();
+#endif
 
 	return start_uml();
 }

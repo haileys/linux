@@ -43,6 +43,33 @@ config UML
 	select THREAD_INFO_IN_TASK
 	select SPARSE_IRQ
 
+config WIN9X
+	bool "Build UML for Win9x"
+	# disable options for arch/um:
+	depends on !UML_TIME_TRAVEL_SUPPORT
+	# disable options from arch/um/drivers:
+	depends on !SSL
+	depends on !UML_NET_VECTOR
+	depends on !MCONSOLE
+	depends on !BLK_DEV_UBD
+	depends on !UML_SOUND
+	depends on !PORT_CHAN
+	depends on !PTY_CHAN
+	depends on !TTY_CHAN
+	depends on !XTERM_CHAN
+	depends on !UML_WATCHDOG
+	depends on !BLK_DEV_COW_COMMON
+	depends on !UML_RANDOM
+	depends on !VIRTIO_UML
+	depends on !UML_RTC
+	depends on !UML_PCI
+	depends on !UML_PCI_OVER_VIRTIO
+	depends on !UML_PCI_OVER_VFIO
+	# disable options for kernel/power:
+	depends on !PM
+	depends on !SUSPEND
+	depends on !HIBERNATION
+
 config MMU
 	bool
 	default y

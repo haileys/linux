@@ -1,3 +1,9 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
-obj-y += kernel/ drivers/ os-Linux/
+obj-y += kernel/ drivers/
+
+ifeq ($(CONFIG_WIN9X),y)
+    obj-y += os-Win95/
+else
+    obj-y += os-Linux/
+endif

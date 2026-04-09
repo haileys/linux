@@ -124,6 +124,8 @@ error:
 	return -errno;
 }
 
+#if 0
+
 /*
  * UML SIGWINCH handling
  *
@@ -321,3 +323,5 @@ void register_winch(int fd, struct tty_port *port)
 			       "synchronization byte, err = %d\n", errno);
 	}
 }
+
+#endif

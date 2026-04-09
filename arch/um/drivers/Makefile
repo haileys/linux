@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0
-# 
+#
 # Copyright (C) 2000, 2002, 2003 Jeff Dike (jdike@karaya.com)
 #
 
@@ -23,18 +23,23 @@ vfio_uml-objs := vfio_kern.o vfio_user.o
 # When the above is fixed, don't forget to add this too!
 #targets += $(obj)/pcap.o
 
-obj-y := stdio_console.o fd.o chan_kern.o chan_user.o line.o
+obj-y :=
+
+ifneq ($(CONFIG_WIN9X),y)
+obj-y += stdio_console.o fd.o chan_kern.o chan_user.o line.o
+endif
+
 obj-$(CONFIG_SSL) += ssl.o
 obj-$(CONFIG_STDERR_CONSOLE) += stderr_console.o
 
 obj-$(CONFIG_UML_NET_VECTOR) += vector.o
 obj-$(CONFIG_MCONSOLE) += mconsole.o
-obj-$(CONFIG_BLK_DEV_UBD) += ubd.o 
+obj-$(CONFIG_BLK_DEV_UBD) += ubd.o
 obj-$(CONFIG_UML_SOUND) += hostaudio.o
-obj-$(CONFIG_NULL_CHAN) += null.o 
+obj-$(CONFIG_NULL_CHAN) += null.o
 obj-$(CONFIG_PORT_CHAN) += port.o
 obj-$(CONFIG_PTY_CHAN) += pty.o
-obj-$(CONFIG_TTY_CHAN) += tty.o 
+obj-$(CONFIG_TTY_CHAN) += tty.o
 obj-$(CONFIG_XTERM_CHAN) += xterm.o xterm_kern.o
 obj-$(CONFIG_UML_WATCHDOG) += harddog.o
 obj-y += $(harddog-builtin-y) $(harddog-builtin-m)
