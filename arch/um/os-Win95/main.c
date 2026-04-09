@@ -1,4 +1,3 @@
-#include <linux/types.h>
 #include <as-layout.h>
 #include <init.h>
 

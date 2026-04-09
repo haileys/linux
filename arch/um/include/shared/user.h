@@ -21,7 +21,9 @@
 #include <linux/types.h>
 #else
 #include <stddef.h>
+#ifndef CONFIG_WIN9X
 #include <sys/types.h>
+#endif
 #endif
 
 extern void panic(const char *fmt, ...)

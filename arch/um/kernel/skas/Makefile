@@ -3,8 +3,11 @@
 # Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
 #
 
-obj-y := stub.o mmu.o process.o syscall.o uaccess.o \
-	 stub_exe_embed.o
+obj-y := mmu.o process.o syscall.o uaccess.o
+
+ifneq ($(CONFIG_WIN9X),y)
+obj-y += stub.o stub_exe_embed.o
+endif
 
 # Stub executable
 

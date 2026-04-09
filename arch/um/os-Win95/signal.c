@@ -1,32 +1,28 @@
 #include <os.h>
 #include "win9x.h"
 
+/* TODO signal/interrupt blocking/unblocking. currently noop */
+
+static int signals_enabled = 0;
+
 void block_signals(void)
 {
-	unimplemented();
+	signals_enabled = 0;
 }
 
 void unblock_signals(void)
 {
-	unimplemented();
+	signals_enabled = 1;
 }
 
 int um_get_signals(void)
 {
-	unimplemented();
+	return signals_enabled;
 }
 
 int um_set_signals(int enable)
 {
-	unimplemented();
-}
-
-void set_sigstack(void *sig_stack, int size)
-{
-	/* TODO set_sigstack - pipe this into a supporting kernel driver */
-}
-
-void init_new_thread_signals(void)
-{
-	/* TODO init_new_thread_signals */
+	int prev = signals_enabled;
+	signals_enabled = enable;
+	return prev;
 }

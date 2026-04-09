@@ -8,6 +8,16 @@
 
 #include <linux/compiler_types.h>
 
+#ifdef CONFIG_WIN9X
+
+#include <wsl9x.h>
+
+struct mm_id {
+	VMM_THREAD_HANDLE th;
+};
+
+#else
+
 #define STUB_MAX_FDS 4
 
 struct mm_id {
@@ -25,5 +35,8 @@ void enter_turnstile(struct mm_id *mm_id) __acquires(turnstile);
 void exit_turnstile(struct mm_id *mm_id) __releases(turnstile);
 
 void notify_mm_kill(int pid);
+
+#endif
+
 
 #endif

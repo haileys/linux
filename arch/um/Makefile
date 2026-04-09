@@ -67,7 +67,6 @@ KBUILD_RUSTFLAGS += -Crelocation-model=pie
 KBUILD_AFLAGS += $(ARCH_INCLUDE)
 
 USER_CFLAGS = $(patsubst $(KERNEL_DEFINES),,$(patsubst -I%,,$(KBUILD_CFLAGS))) \
-		-nostdinc -nostdlib -isystem $(HOME)/cross/i386-linux-musl/i386-linux-musl/include \
 		$(ARCH_INCLUDE) $(MODE_INCLUDE) $(filter -I%,$(CFLAGS)) \
 		-D_FILE_OFFSET_BITS=64 -idirafter $(srctree)/include \
 		-idirafter $(objtree)/include -D__KERNEL__ -D__UM_HOST__ \
@@ -132,8 +131,12 @@ export LDS_START      := $(START)
 export LDS_ELF_ARCH   := $(ELF_ARCH)
 export LDS_ELF_FORMAT := $(ELF_FORMAT)
 
+ifdef CONFIG_WIN9X
+LINK_WRAPS =
+else
 # The wrappers will select whether using "malloc" or the kernel allocator.
 LINK_WRAPS = -Wl,--wrap,malloc -Wl,--wrap,free -Wl,--wrap,calloc
+endif
 
 # Avoid binutils 2.39+ warnings by marking the stack non-executable and
 # ignorning warnings for the kallsyms sections.
@@ -146,6 +149,10 @@ LD_FLAGS_CMDLINE = $(foreach opt,$(KBUILD_LDFLAGS) $(LDFLAGS_EXECSTACK),-Wl,$(op
 
 # Used by link-vmlinux.sh which has special support for um link
 export CFLAGS_vmlinux := $(LINK-y) $(LINK_WRAPS) $(LD_FLAGS_CMDLINE) $(CC_FLAGS_LTO)
+
+ifdef CONFIG_WIN9X
+CFLAGS_vmlinux += -nostdlib
+endif
 
 # When cleaning we don't include .config, so we don't include
 # TT or skas makefiles and don't clean skas_ptregs.h.

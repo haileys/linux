@@ -81,7 +81,10 @@ vmlinux_link()
 		wl=-Wl,
 		ld="${CC}"
 		ldflags="${CFLAGS_vmlinux}"
-		ldlibs="-lutil -lrt -lpthread"
+		ldlibs=
+		if ! is_enabled CONFIG_WIN9X; then
+			ldlibs="-lutil -lrt -lpthread"
+		fi
 	else
 		wl=
 		ld="${LD}"

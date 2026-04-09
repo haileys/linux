@@ -15,7 +15,13 @@
 #ifndef __UM_HOST__
 #include <linux/types.h>
 #else
+#ifndef CONFIG_WIN9X
 #include <sys/types.h>
+#endif
+#endif
+
+#ifdef CONFIG_WIN9X
+#include <wsl9x.h>
 #endif
 
 #define CATCH_EINTR(expr) while ((errno = 0, ((expr) < 0)) && (errno == EINTR))
@@ -197,10 +203,12 @@ extern int create_mem_file(unsigned long long len);
 extern void report_enomem(void);
 
 /* process.c */
+#ifndef CONFIG_WIN9X
 pid_t os_reap_child(void);
 extern void os_alarm_process(int pid);
 extern void os_kill_process(int pid, int reap_child);
 extern void os_kill_ptraced_process(int pid, int reap_child);
+#endif
 
 extern int os_getpid(void);
 
