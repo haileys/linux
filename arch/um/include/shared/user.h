@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/* 
+/*
  * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
@@ -20,8 +20,9 @@
 #ifndef __UM_HOST__
 #include <linux/types.h>
 #else
-#include <stddef.h>
-#ifndef CONFIG_WIN9X
+#ifdef CONFIG_WIN9X
+#include <stdint.h>
+#else
 #include <sys/types.h>
 #endif
 #endif
@@ -60,7 +61,9 @@ static inline void print_hex_dump(const char *level, const char *prefix_str,
 #endif
 
 extern int in_aton(char *str);
+#ifndef CONFIG_WIN9X
 extern size_t strlcat(char *, const char *, size_t);
+#endif
 extern size_t sized_strscpy(char *, const char *, size_t);
 #define strscpy(dst, src)	sized_strscpy(dst, src, sizeof(dst))
 

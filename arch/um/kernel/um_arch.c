@@ -45,8 +45,7 @@ static char __initdata command_line[COMMAND_LINE_SIZE] = { 0 };
 static void __init add_arg(char *arg)
 {
 	if (strlen(command_line) + strlen(arg) + 1 > COMMAND_LINE_SIZE) {
-		os_warn("add_arg: Too many command line arguments!\n");
-		exit(1);
+		panic("add_arg: Too many command line arguments!\n");
 	}
 	if (strlen(command_line) > 0)
 		strcat(command_line, " ");
@@ -137,6 +136,7 @@ static int have_console __initdata;
 unsigned long long physmem_size = 64 * 1024 * 1024;
 EXPORT_SYMBOL(physmem_size);
 
+#ifndef CONFIG_WIN9X
 static const char *usage_string =
 "User Mode Linux v%s\n"
 "	available at http://user-mode-linux.sourceforge.net/\n\n";
@@ -154,6 +154,7 @@ __uml_setup("--version", uml_version_setup,
 "--version\n"
 "    Prints the version number of the kernel.\n\n"
 );
+#endif
 
 static int __init uml_root_setup(char *line, int *add)
 {
@@ -181,6 +182,7 @@ __uml_setup("console=", uml_console_setup,
 "    Specify the preferred console output driver\n\n"
 );
 
+#ifndef CONFIG_WIN9X
 static int __init Usage(char *line, int *add)
 {
 	const char **p;
@@ -200,6 +202,7 @@ __uml_setup("--help", Usage,
 "--help\n"
 "    Prints this message.\n\n"
 );
+#endif
 
 static void __init uml_checksetup(char *line, int *add)
 {
@@ -260,7 +263,9 @@ unsigned long stub_start;
 unsigned long task_size;
 EXPORT_SYMBOL(task_size);
 
+#ifndef CONFIG_WIN9X
 unsigned long brk_start;
+#endif
 
 #define MIN_VMALLOC (32 * 1024 * 1024)
 
@@ -289,6 +294,7 @@ static void __init parse_cache_line(char *line)
 	}
 }
 
+#ifndef CONFIG_WIN9X
 static unsigned long __init get_top_address(char **envp)
 {
 	unsigned long top_addr = (unsigned long) &top_addr;
@@ -302,13 +308,15 @@ static unsigned long __init get_top_address(char **envp)
 
 	return PAGE_ALIGN(top_addr + 1);
 }
+#endif
 
 int __init linux_main(int argc, char **argv, char **envp)
 {
+#ifndef CONFIG_WIN9X
 	unsigned long avail, diff;
-	unsigned long virtmem_size, max_physmem;
-	unsigned long host_task_size;
 	unsigned long stack;
+	unsigned long host_task_size;
+#endif
 	unsigned int i;
 	int add;
 
@@ -326,6 +334,9 @@ int __init linux_main(int argc, char **argv, char **envp)
 	if (have_console == 0)
 		add_arg(DEFAULT_COMMAND_LINE_CONSOLE);
 
+#ifdef CONFIG_WIN9X
+	task_size = 0x80000000; // start of Win9x shared arena
+#else
 	host_task_size = get_top_address(envp);
 	/* reserve a few pages for the stubs */
 	stub_start = host_task_size - STUB_SIZE;
@@ -341,12 +352,14 @@ int __init linux_main(int argc, char **argv, char **envp)
 	 * out
 	 */
 	task_size = task_size & PGDIR_MASK;
+#endif
 
 	/* OS sanity checks that need to happen before the kernel runs */
 	os_early_checks();
 
 	get_host_cpu_features(parse_host_cpu_flags, parse_cache_line);
 
+#ifndef CONFIG_WIN9X
 	brk_start = (unsigned long) sbrk(0);
 
 	/*
@@ -360,16 +373,23 @@ int __init linux_main(int argc, char **argv, char **envp)
 			"exec-shield gap\n", diff);
 		physmem_size += diff;
 	}
+#endif
 
+	physmem_size = PAGE_ALIGN(physmem_size);
+
+#ifdef CONFIG_WIN9X
+	uml_physmem = allocate_physmem_win9x();
+	uml_reserved = uml_physmem + (1 << 22);
+#else
 	uml_physmem = (unsigned long) __binary_start & PAGE_MASK;
 
 	/* Reserve up to 4M after the current brk */
 	uml_reserved = ROUND_4M(brk_start) + (1 << 22);
+#endif
 
 	setup_machinename(init_utsname()->machine);
 
-	physmem_size = PAGE_ALIGN(physmem_size);
-	max_physmem = TASK_SIZE - uml_physmem - MIN_VMALLOC;
+	ulong max_physmem = TASK_SIZE - uml_physmem - MIN_VMALLOC;
 	if (physmem_size > max_physmem) {
 		physmem_size = max_physmem;
 		os_info("Physical memory size shrunk to %llu bytes\n",
@@ -380,12 +400,14 @@ int __init linux_main(int argc, char **argv, char **envp)
 
 	start_vm = VMALLOC_START;
 
-	virtmem_size = physmem_size;
+	ulong virtmem_size = physmem_size;
+#ifndef CONFIG_WIN9X
 	stack = (unsigned long) argv;
 	stack &= ~(1024 * 1024 - 1);
 	avail = stack - start_vm;
 	if (physmem_size > avail)
 		virtmem_size = avail;
+#endif
 	end_vm = start_vm + virtmem_size;
 
 	if (virtmem_size < physmem_size)

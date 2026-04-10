@@ -57,8 +57,10 @@ pgd_t swapper_pg_dir[PTRS_PER_PGD];
 /* Initialized at boot time, and readonly after that */
 int kmalloc_ok = 0;
 
+#ifndef CONFIG_WIN9X
 /* Used during early boot */
 static unsigned long brk_end;
+#endif
 
 void __init arch_mm_preinit(void)
 {
@@ -68,6 +70,12 @@ void __init arch_mm_preinit(void)
 	/* clear the zero-page */
 	memset(empty_zero_page, 0, PAGE_SIZE);
 
+#ifdef CONFIG_WIN9X
+	memblock_free((void*)uml_physmem, uml_reserved - uml_physmem);
+	uml_reserved = uml_physmem;
+	min_low_pfn = PFN_UP(__pa(uml_reserved));
+	max_pfn = max_low_pfn;
+#else
 	/* Map in the area just after the brk now that kmalloc is about
 	 * to be turned on.
 	 */
@@ -77,6 +85,7 @@ void __init arch_mm_preinit(void)
 	uml_reserved = brk_end;
 	min_low_pfn = PFN_UP(__pa(uml_reserved));
 	max_pfn = max_low_pfn;
+#endif
 }
 
 void __init mem_init(void)
@@ -86,14 +95,13 @@ void __init mem_init(void)
 
 void __init paging_init(void)
 {
-	unsigned long max_zone_pfn[MAX_NR_ZONES] = { 0 };
-
 	empty_zero_page = (unsigned long *) memblock_alloc_low(PAGE_SIZE,
 							       PAGE_SIZE);
 	if (!empty_zero_page)
 		panic("%s: Failed to allocate %lu bytes align=%lx\n",
 		      __func__, PAGE_SIZE, PAGE_SIZE);
 
+	unsigned long max_zone_pfn[MAX_NR_ZONES] = { 0 };
 	max_zone_pfn[ZONE_NORMAL] = high_physmem >> PAGE_SHIFT;
 	free_area_init(max_zone_pfn);
 }

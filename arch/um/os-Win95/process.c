@@ -1,7 +1,6 @@
-#include "sysdep/ptrace.h"
 #include <os.h>
-#include <string.h>
 #include <registers.h>
+#include "sysdep/ptrace.h"
 #include "win9x.h"
 
 int start_idle_thread(void *stack, jmp_buf *switch_buf)
@@ -42,9 +41,5 @@ int unmap(struct mm_id *mm_idp, unsigned long addr, unsigned long len)
 
 void get_safe_registers(unsigned long *regs, unsigned long *fp_regs)
 {
-	/* TODO get_safe_registers - handle eflags */
-	memset(regs, 0, MAX_REG_OFFSET);
-
-	if (fp_regs)
-		memset(fp_regs, 0, host_fp_size);
+	unimplemented();
 }

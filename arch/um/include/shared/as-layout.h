@@ -42,9 +42,11 @@ extern unsigned long uml_reserved;
 extern unsigned long end_vm;
 extern unsigned long start_vm;
 
+#ifndef CONFIG_WIN9X
 extern unsigned long brk_start;
 
 extern unsigned long stub_start;
+#endif
 
 extern int linux_main(int argc, char **argv, char **envp);
 extern void uml_finishsetup(void);

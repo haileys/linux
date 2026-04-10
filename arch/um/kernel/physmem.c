@@ -16,15 +16,27 @@
 #include <mem_user.h>
 #include <os.h>
 
+#ifdef CONFIG_WIN9X
+#include <wsl9x.h>
+#endif
+
+#ifdef CONFIG_WIN9X
+static HMEM physmem_handle = 0;
+#else
 static int physmem_fd = -1;
+#endif
 
 /* Changed during early boot */
 unsigned long high_physmem;
 EXPORT_SYMBOL(high_physmem);
 
+
 void map_memory(unsigned long virt, unsigned long phys, unsigned long len,
 		int r, int w, int x)
 {
+#ifdef CONFIG_WIN9X
+	unimplemented();
+#else
 	__u64 offset;
 	int fd, err;
 
@@ -38,7 +50,23 @@ void map_memory(unsigned long virt, unsigned long phys, unsigned long len,
 		panic("map_memory(0x%lx, %d, 0x%llx, %ld, %d, %d, %d) failed, "
 		      "err = %d\n", virt, fd, offset, len, r, w, x, err);
 	}
+#endif
 }
+
+#ifdef CONFIG_WIN9X
+u32 __init allocate_physmem_win9x()
+{
+	u32 npages = physmem_size / PAGE_SIZE;
+	physmem_handle = VMM_PageReserve(PR_SYSTEM, npages, PR_FIXED | PR_4MEG);
+	if (physmem_handle == HMEM_FAIL) {
+		panic("VMM_PageReserve failed; npages=%d", npages);
+	}
+
+	// handle returned by VMM_PageReserve is also base address for
+	// reserved virtual address range:
+	return (u32)physmem_handle;
+}
+#endif
 
 /**
  * setup_physmem() - Setup physical memory for UML
@@ -64,17 +92,16 @@ void __init setup_physmem(unsigned long start, unsigned long reserve_end,
 {
 	unsigned long reserve = reserve_end - start;
 	unsigned long map_size = len - reserve;
-	int err;
 
 	if (len <= reserve) {
-		os_warn("Too few physical memory! Needed=%lu, given=%lu\n",
+		panic("Too few physical memory! Needed=%lu, given=%lu\n",
 			reserve, len);
-		exit(1);
 	}
 
+#ifndef CONFIG_WIN9X
 	physmem_fd = create_mem_file(len);
 
-	err = os_map_memory((void *) reserve_end, physmem_fd, reserve,
+	int err = os_map_memory((void *) reserve_end, physmem_fd, reserve,
 			    map_size, 1, 1, 1);
 	if (err < 0) {
 		os_warn("setup_physmem - mapping %lu bytes of memory at 0x%p "
@@ -89,6 +116,7 @@ void __init setup_physmem(unsigned long start, unsigned long reserve_end,
 	 */
 	os_seek_file(physmem_fd, __pa(__syscall_stub_start));
 	os_write_file(physmem_fd, __syscall_stub_start, PAGE_SIZE);
+#endif
 
 	memblock_add(__pa(start), len);
 	memblock_reserve(__pa(start), reserve);
@@ -97,6 +125,7 @@ void __init setup_physmem(unsigned long start, unsigned long reserve_end,
 	max_low_pfn = min_low_pfn + (map_size >> PAGE_SHIFT);
 }
 
+#ifndef CONFIG_WIN9X
 int phys_mapping(unsigned long phys, unsigned long long *offset_out)
 {
 	int fd = -1;
@@ -109,6 +138,7 @@ int phys_mapping(unsigned long phys, unsigned long long *offset_out)
 	return fd;
 }
 EXPORT_SYMBOL(phys_mapping);
+#endif
 
 static int __init uml_mem_setup(char *line, int *add)
 {

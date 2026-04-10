@@ -9,11 +9,16 @@ else
 	BITS := 64
 endif
 
-obj-y = bugs_$(BITS).o delay.o fault.o \
-	ptrace.o ptrace_$(BITS).o ptrace_user.o setjmp_$(BITS).o signal.o \
-	stub_segv.o \
+obj-y = delay.o fault.o \
+	ptrace.o ptrace_$(BITS).o setjmp_$(BITS).o signal.o \
 	sys_call_table_$(BITS).o sysrq_$(BITS).o tls_$(BITS).o \
-	subarch.o os-Linux/
+	subarch.o
+
+ifeq ($(CONFIG_WIN9X),y)
+obj-y += os-Win95/
+else
+obj-y += bugs_$(BITS).o ptrace_user.o stub_segv.o os-Linux/
+endif
 
 ifeq ($(CONFIG_X86_32),y)
 
@@ -35,7 +40,11 @@ endif
 
 subarch-$(CONFIG_MODULES) += ../kernel/module.o
 
-USER_OBJS := bugs_$(BITS).o ptrace_user.o fault.o
+USER_OBJS := fault.o
+
+ifneq ($(CONFIG_WIN9X),y)
+USER_OBJS += bugs_$(BITS).o ptrace_user.o
+endif
 
 $(obj)/user-offsets.s: c_flags = -Wp,-MD,$(depfile) \
 	$(patsubst -nostdinc,,$(USER_CFLAGS)) \

@@ -34,6 +34,9 @@
 
 #define ROUND_4M(n) ((((unsigned long) (n)) + (1 << 22)) & ~((1 << 22) - 1))
 
+#ifdef CONFIG_WIN9X
+u32 allocate_physmem_win9x(void);
+#endif
 extern void setup_physmem(unsigned long start, unsigned long usable,
 			  unsigned long len);
 extern void map_memory(unsigned long virt, unsigned long phys,

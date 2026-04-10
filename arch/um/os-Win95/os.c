@@ -1,11 +1,7 @@
 #include <init.h>
 #include <os.h>
-
 #include <stdarg.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
+#include <linux/string.h>
 #include "win9x.h"
 
 /* debugging */
@@ -56,18 +52,6 @@ void stack_protections(unsigned long address)
 	(void)address;
 }
 
-/* process management */
-
-pid_t os_reap_child(void)
-{
-	unimplemented();
-}
-
-void os_kill_ptraced_process(int pid, int reap_child)
-{
-	unimplemented();
-}
-
 /* idling */
 
 void os_idle_prepare(void)
@@ -83,11 +67,6 @@ void os_idle_sleep(void)
 /* timers */
 
 long long os_nsecs(void)
-{
-	unimplemented();
-}
-
-long long os_persistent_clock_emulation(void)
 {
 	unimplemented();
 }
@@ -108,11 +87,6 @@ int os_timer_set_interval(int cpu, unsigned long long nsecs)
 }
 
 int os_timer_one_shot(int cpu, unsigned long long nsecs)
-{
-	unimplemented();
-}
-
-void os_alarm_process(int pid)
 {
 	unimplemented();
 }
@@ -156,35 +130,42 @@ int os_file_size(const char *file, unsigned long long *size_out)
 
 /* util */
 
+static uint8_t get_random_byte(void)
+{
+	// simple LCG, it doesn't have to be good
+	static uint32_t seed = 0x1ebec837;
+	const uint32_t m = 0xffffffff;
+	const uint32_t a = 1103515245;
+	const uint32_t c = 12345;
+
+	seed = (a * seed + c) % m;
+	return (uint8_t)seed;
+}
+
 ssize_t os_getrandom(void *buf, size_t len, unsigned int flags)
 {
-	unimplemented();
+	uint8_t *out = buf;
+
+	for (size_t i = 0; i < len; i++) {
+		out[i] = get_random_byte();
+	}
+
+	return len;
 }
 
 void setup_hostinfo(char *buf, int len)
 {
 	/* TODO more hostinfo in here */
-	strcpy(buf, "Win9x");
+	sized_strscpy(buf, "Win9x", len);
 }
 
 void setup_machinename(char *machine_out)
 {
 	/* TODO return actual arch level here */
-	strcpy(machine_out, "i386");
+	sized_strscpy(machine_out, "i386", 64);
 }
 
 /* logging */
-
-static void os_log_message(const char* s, size_t n)
-{
-	while (n) {
-		ssize_t rc = write(2, s, n);
-		if (rc <= 0) {
-			break;
-		}
-		n -= rc;
-	}
-}
 
 /*
  * The os_info/os_warn functions will be called by helper threads. These
@@ -203,7 +184,7 @@ void os_info(const char *fmt, ...)
 
 	va_start(list, fmt);
 	len = vscnprintf(buf, sizeof(buf), fmt, list);
-	os_log_message(buf, len);
+	WSL9x_Log_Info(buf, len);
 	va_end(list);
 }
 
@@ -215,11 +196,11 @@ void os_warn(const char *fmt, ...)
 
 	va_start(list, fmt);
 	len = vscnprintf(buf, sizeof(buf), fmt, list);
-	os_log_message(buf, len);
+	WSL9x_Log_Warn(buf, len);
 	va_end(list);
 }
 
 void um_early_printk(const char *s, unsigned int n)
 {
-	os_log_message(s, n);
+	WSL9x_Printk(s, n);
 }

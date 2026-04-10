@@ -14,3 +14,16 @@ int __init main(int argc, char **argv, char **envp)
 	init_hwcap();
 	return linux_main(argc, argv, envp);
 }
+
+/* HARNESS FUNCS: */
+
+void _start(void);
+void _start(void)
+{
+	char* argv[] = {
+		"vmlinux",
+	};
+	char* envp[] = { 0 };
+	int rc = main(sizeof(argv) / sizeof(*argv), argv, envp);
+	asm volatile ("int $0x80" :: "a"(1 /* NR_exit */), "b"(rc));
+}

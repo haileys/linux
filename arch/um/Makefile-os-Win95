@@ -2,7 +2,4 @@ KBUILD_CFLAGS += \
     -idirafter $(srctree)/$(ARCH_DIR)/os-Win95/include
 
 USER_CFLAGS += -D_GNU_SOURCE -nostdinc -nostdlib \
-    -idirafter $(srctree)/$(ARCH_DIR)/os-Win95/include \
-    -idirafter $(srctree)/include/uapi \
-    -idirafter $(srctree)/$(HOST_DIR)/include/uapi \
-    -idirafter $(srctree)/$(HOST_DIR)/include/generated/uapi
+    -I $(srctree)/$(ARCH_DIR)/os-Win95/include

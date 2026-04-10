@@ -14,9 +14,9 @@ CPPFLAGS_vmlinux.lds := -DSTART=$(LDS_START)		\
 			$(LDS_EXTRA)
 always-$(KBUILD_BUILTIN) := vmlinux.lds
 
-obj-y = exec.o exitcode.o ksyms.o mem.o \
-	physmem.o process.o ptrace.o reboot.o sigio.o \
-	signal.o sysrq.o trap.o \
+obj-y = exec.o exitcode.o ksyms.o mem.o physmem.o \
+	process.o ptrace.o reboot.o sigio.o \
+	signal.o sysrq.o \
 	um_arch.o umid.o kmsg_dump.o capflags.o skas/
 obj-y += load_file.o
 
@@ -37,7 +37,7 @@ obj-$(CONFIG_STACKTRACE) += stacktrace.o
 obj-$(CONFIG_SMP) += smp.o
 
 ifneq ($(CONFIG_WIN9X),y)
-USER_OBJS := config.o
+USER_OBJS := config.o trap.o
 endif
 
 include $(srctree)/arch/um/scripts/Makefile.rules

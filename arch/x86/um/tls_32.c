@@ -40,7 +40,13 @@ static int do_set_thread_area(struct task_struct* task, struct user_desc *info)
 		return 0;
 	}
 
-	ret = os_set_thread_area(info, task->mm->context.id.pid);
+	ret = os_set_thread_area(info,
+#ifdef CONFIG_WIN9X
+		task->mm->context.id.th
+#else
+		task->mm->context.id.pid
+#endif
+	);
 
 	if (ret)
 		printk(KERN_ERR "PTRACE_SET_THREAD_AREA failed, err = %d, "
@@ -362,6 +368,11 @@ out:
  */
 static int __init __setup_host_supports_tls(void)
 {
+#ifdef CONFIG_WIN9X
+	printk(KERN_ERR "  Win9x TLS support NOT yet implemented! "
+			"TLS support inside UML will not work\n");
+	return 0;
+#else
 	check_host_supports_tls(&host_supports_tls, &host_gdt_entry_tls_min);
 	if (host_supports_tls) {
 		printk(KERN_INFO "Host TLS support detected\n");
@@ -381,6 +392,7 @@ static int __init __setup_host_supports_tls(void)
 		printk(KERN_ERR "  Host TLS support NOT detected! "
 				"TLS support inside UML will not work\n");
 	return 0;
+#endif
 }
 
 __initcall(__setup_host_supports_tls);

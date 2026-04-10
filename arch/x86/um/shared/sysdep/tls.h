@@ -2,6 +2,8 @@
 #ifndef _SYSDEP_TLS_H
 #define _SYSDEP_TLS_H
 
+#include <wsl9x.h>
+
 #ifdef __UM_HOST__
 
 /* Change name to avoid conflicts with the original one from <asm/ldt.h>, which
@@ -29,8 +31,13 @@ typedef struct user_desc user_desc_t;
 
 #endif /* __UM_HOST__ */
 
+#ifdef CONFIG_WIN9X
+extern int os_set_thread_area(user_desc_t *info, VMM_THREAD_HANDLE th);
+extern int os_get_thread_area(user_desc_t *info, VMM_THREAD_HANDLE th);
+#else
 extern int os_set_thread_area(user_desc_t *info, int pid);
 extern int os_get_thread_area(user_desc_t *info, int pid);
+#endif
 
 #ifdef __i386__
 #define GDT_ENTRY_TLS_MIN_I386 6

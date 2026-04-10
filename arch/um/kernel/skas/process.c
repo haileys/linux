@@ -3,6 +3,7 @@
  * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
+#include "linux/compiler.h"
 #include <linux/init.h>
 #include <linux/sched/mm.h>
 #include <linux/sched/task_stack.h>
@@ -29,19 +30,30 @@ static int __init start_kernel_proc(void *unused)
 	return 0;
 }
 
+#ifndef CONFIG_WIN9X
 char cpu_irqstacks[NR_CPUS][THREAD_SIZE] __aligned(THREAD_SIZE);
+#endif
 
 int __init start_uml(void)
 {
+#ifndef CONFIG_WIN9X
 	stack_protections((unsigned long) &cpu_irqstacks[0]);
 	set_sigstack(cpu_irqstacks[0], THREAD_SIZE);
 
 	init_new_thread_signals();
+#endif
 
 	init_task.thread.request.thread.proc = start_kernel_proc;
 	init_task.thread.request.thread.arg = NULL;
+
+#ifdef CONFIG_WIN9X
+	uml_finishsetup();
+	// uml_finishsetup drops straight into userspace
+	unreachable();
+#else
 	return start_idle_thread(task_stack_page(&init_task),
 				 &init_task.thread.switch_buf);
+#endif
 }
 
 unsigned long current_stub_stack(void)

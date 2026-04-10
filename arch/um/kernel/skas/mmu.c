@@ -17,12 +17,15 @@
 #include <skas.h>
 #include <stub-data.h>
 
+#include <wsl9x.h>
+
 /* Ensure the stub_data struct covers the allocated area */
 static_assert(sizeof(struct stub_data) == STUB_DATA_PAGES * UM_KERN_PAGE_SIZE);
 
 static spinlock_t mm_list_lock;
 static struct list_head mm_list;
 
+#ifndef CONFIG_WIN9X
 void enter_turnstile(struct mm_id *mm_id) __acquires(turnstile)
 {
 	struct mm_context *ctx = container_of(mm_id, struct mm_context, id);
@@ -36,6 +39,7 @@ void exit_turnstile(struct mm_id *mm_id) __releases(turnstile)
 
 	mutex_unlock(&ctx->turnstile);
 }
+#endif
 
 int init_new_context(struct task_struct *task, struct mm_struct *mm)
 {
@@ -52,7 +56,9 @@ int init_new_context(struct task_struct *task, struct mm_struct *mm)
 
 	new_id->stack = stack;
 	new_id->syscall_data_len = 0;
+#ifndef CONFIG_WIN9X
 	new_id->syscall_fd_num = 0;
+#endif
 
 	scoped_guard(spinlock_irqsave, &mm_list_lock) {
 		/* Insert into list, used for lookups when the child dies */
@@ -63,8 +69,10 @@ int init_new_context(struct task_struct *task, struct mm_struct *mm)
 	if (ret < 0)
 		goto out_free;
 
+#ifndef CONFIG_WIN9X
 	/* Ensure the new MM is clean and nothing unwanted is mapped */
 	unmap(new_id, 0, STUB_START);
+#endif
 
 	return 0;
 
@@ -86,15 +94,28 @@ void destroy_context(struct mm_struct *mm)
 	 *
 	 * Negative cases happen if the child died unexpectedly.
 	 */
+#ifdef CONFIG_WIN9X
+	if (mmu->id.th == NULL) {
+		printk(KERN_ERR "corrupt mm_context - null thread handle\n");
+		return;
+	}
+#else
 	if (mmu->id.pid >= 0 && mmu->id.pid < 2) {
 		printk(KERN_ERR "corrupt mm_context - pid = %d\n",
 		       mmu->id.pid);
 		return;
 	}
+#endif
 
 	scoped_guard(spinlock_irqsave, &mm_list_lock)
 		list_del(&mm->context.list);
 
+#ifdef CONFIG_WIN9X
+	if (mmu->id.th) {
+		VMMTerminateThread(mmu->id.th);
+		mmu->id.th = NULL;
+	}
+#else
 	if (mmu->id.pid > 0) {
 		os_kill_ptraced_process(mmu->id.pid, 1);
 		mmu->id.pid = -1;
@@ -102,10 +123,12 @@ void destroy_context(struct mm_struct *mm)
 
 	if (using_seccomp && mmu->id.sock)
 		os_close_file(mmu->id.sock);
+#endif
 
 	free_pages(mmu->id.stack, ilog2(STUB_DATA_PAGES));
 }
 
+#ifndef CONFIG_WIN9X
 static irqreturn_t mm_sigchld_irq(int irq, void* dev)
 {
 	struct mm_context *mm_context;
@@ -145,17 +168,18 @@ static irqreturn_t mm_sigchld_irq(int irq, void* dev)
 
 	return IRQ_HANDLED;
 }
+#endif
 
 static int __init init_child_tracking(void)
 {
-	int err;
-
 	spin_lock_init(&mm_list_lock);
 	INIT_LIST_HEAD(&mm_list);
 
-	err = request_irq(SIGCHLD_IRQ, mm_sigchld_irq, 0, "SIGCHLD", NULL);
+#ifndef CONFIG_WIN9X
+	int err = request_irq(SIGCHLD_IRQ, mm_sigchld_irq, 0, "SIGCHLD", NULL);
 	if (err < 0)
 		panic("Failed to register SIGCHLD IRQ: %d", err);
+#endif
 
 	return 0;
 }

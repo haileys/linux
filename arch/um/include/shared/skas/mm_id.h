@@ -14,6 +14,8 @@
 
 struct mm_id {
 	VMM_THREAD_HANDLE th;
+	unsigned long stack;
+	int syscall_data_len;
 };
 
 #else

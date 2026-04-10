@@ -15,7 +15,9 @@
 #ifndef __UM_HOST__
 #include <linux/types.h>
 #else
-#ifndef CONFIG_WIN9X
+#ifdef CONFIG_WIN9X
+#include <stdint.h>
+#else
 #include <sys/types.h>
 #endif
 #endif
@@ -203,7 +205,8 @@ extern int create_mem_file(unsigned long long len);
 extern void report_enomem(void);
 
 /* process.c */
-#ifndef CONFIG_WIN9X
+#ifdef CONFIG_WIN9X
+#else
 pid_t os_reap_child(void);
 extern void os_alarm_process(int pid);
 extern void os_kill_process(int pid, int reap_child);
