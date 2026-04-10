@@ -267,7 +267,9 @@ extern void unblock_signals_hard(void);
 extern void mark_sigio_pending(void);
 
 /* util.c */
+#ifndef CONFIG_WIN9X
 extern void stack_protections(unsigned long address);
+#endif
 extern int raw(int fd);
 extern void setup_machinename(char *machine_out);
 extern void setup_hostinfo(char *buf, int len);

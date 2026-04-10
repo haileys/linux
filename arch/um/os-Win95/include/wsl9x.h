@@ -2,12 +2,25 @@
 #include <wsl9x/prelude.h>
 #include <wsl9x/thread.h>
 #include <wsl9x/mem.h>
+#include <wsl9x/time.h>
 
 static inline __noreturn void unimplemented(void)
 {
 	__asm__ volatile ("int3" ::: "memory");
 	__asm__ volatile ("ud2" ::: "memory");
 	for (;;) ;
+}
+
+struct u32divrem {
+	uint32_t quo;
+	uint32_t rem;
+};
+
+static inline struct u32divrem udiv64(uint64_t num, uint32_t denom)
+{
+	struct u32divrem out;
+	__asm__ ("divl %[denom]" : "=a"(out.quo), "=d"(out.rem) : "A"(num), [denom]"r"(denom));
+	return out;
 }
 
 void WSL9x_Printks(const char* str);

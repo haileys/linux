@@ -432,7 +432,11 @@ void __init setup_arch(char **cmdline_p)
 {
 	u8 rng_seed[32];
 
+// Win9x has no NX/stack protections
+#ifndef CONFIG_WIN9X
 	stack_protections((unsigned long) init_task.stack);
+#endif
+
 	setup_physmem(uml_physmem, uml_reserved, physmem_size);
 	uml_dtb_init();
 	read_initrd();

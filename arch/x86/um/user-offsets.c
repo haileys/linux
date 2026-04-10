@@ -70,9 +70,7 @@ void foo(void)
 
 	DEFINE(UM_FRAME_SIZE, sizeof(struct user_regs_struct));
 
-#ifndef CONFIG_WIN9X
 	DEFINE(UM_PROT_READ, PROT_READ);
 	DEFINE(UM_PROT_WRITE, PROT_WRITE);
 	DEFINE(UM_PROT_EXEC, PROT_EXEC);
-#endif
 }

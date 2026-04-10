@@ -1,26 +1,37 @@
+// Linux-based runtime harness for Win9x UML
+
 // must include these headers in a precise order to get things to compile...
+// #include <asm/mman.h>
+#include <asm/mman.h>
 #undef __KERNEL__
 #define __EXPORTED_HEADERS__
-// #include <asm-generic/posix_types.h>
 #include <linux/time.h>
 #undef __EXPORTED_HEADERS__
 #define __KERNEL__
-// typedef __kernel_long_t	__kernel_time_t;
-// #include <linux/time.h>
-// #define _SSIZE_T
-// #define _PTRDIFF_T
-// #define _NOLIBC_STD_H
-// #include <linux/types.h>
+
+#include <asm/unistd_32.h>
 #include <stdbool.h>
-#include <asm-generic/unistd.h>
 #define _NOLIBC_SYS_SELECT_H
-#include <nolibc.h>
-#include <sys.h>
+#define NOLIBC_NO_RUNTIME
+// #include <nolibc.h>
+#include <arch-x86.h>
 
-// Linux-based runtime harness for Win9x UML
+// we're good
+#include <vdso/time64.h>
+#include <mem_user.h>
 #include <wsl9x.h>
+#include <asm-generic/mman-common.h>
+#include <linux/mman.h>
 
-// size_t strlen(const char *s);
+size_t strlen(const char* s);
+
+#define __NR_write 4
+#define __NR_mmap2 192
+#define __NR_munmap 91
+#define __NR_clock_gettime64 403
+#define __NR_memfd_create 356
+#define __NR_ftruncate 93
+#define __NR_fallocate 324
 
 void WSL9x_Printks(const char* str)
 {
@@ -30,7 +41,7 @@ void WSL9x_Printks(const char* str)
 static void sys_write_all(int fd, const char* buf, size_t len)
 {
 	while (len) {
-		ssize_t rc = sys_write(fd, buf, len);
+		ssize_t rc = my_syscall3(__NR_write, fd, buf, len);
 		if (rc < 0) {
 			break;
 		}
@@ -58,23 +69,146 @@ void WSL9x_Log_Warn(const char* str, size_t len)
 
 HMEM VMM_PageReserve(uint32_t virt_pfn, uint32_t npages, uint32_t flags_)
 {
-	const uint32_t NR_mmap2 = 192;
-	// const uint32_t PROT_READ = 1;
-	// const uint32_t PROT_WRITE = 2;
-	// const uint32_t MAP_PRIVATE = 0x02;
-	// const uint32_t MAP_ANONYMOUS = 0x20;
-	// const uint32_t MAP_32BIT = 0x40;
+	if (virt_pfn != PR_SYSTEM) {
+		panic("virt_pfn != PR_SYSTEM");
+	}
+
+
+	// take next allocated system arena addr and bump it to next 4M boundary
+	static uint32_t system_addr = 0xc1000000;
+	uint32_t addr = system_addr;
+	system_addr = ROUND_4M(system_addr + ((npages + 1) * 4096));
+
+	return (HMEM)addr;
+
 	uint32_t len = npages * 4096;
 	uint32_t prot = PROT_READ | PROT_WRITE;
-	uint32_t flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT;
-	void* rc;
-	asm volatile ("pushl %%ebp \n xorl %%ebp, %%ebp \n int $0x80 \n popl %%ebp"
-		: "=a"(rc)
-		: "a"(NR_mmap2), "b"(0), "c"(len), "d"(prot), "S"(flags), "D"(-1), "ebp"(0));
-	return rc;
+	uint32_t flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT | MAP_FIXED;
+
+	if (my_syscall6(__NR_mmap2, addr, len, prot, flags, -1, 0) != addr) {
+		WSL9x_Printks("mmap failed!\n");
+		unimplemented();
+	}
+
+	return (HMEM)addr;
+}
+
+static int memfd = -1;
+
+uint32_t VMM_PageCommit(uint32_t pagenum, uint32_t npages, uint32_t pager, uint32_t pagerdata, uint32_t flags_)
+{
+	if (pager != PD_FIXEDZERO || flags_ != PC_FIXED) {
+		panic("bad flags to VMM_PageCommit");
+		return 1;
+	}
+
+	if (memfd >= 0) {
+		panic("VMM_PageCommit already called");
+		return 1;
+	}
+
+	memfd = my_syscall2(__NR_memfd_create, "-", 0);
+	if (memfd < 0) {
+		panic("memfd failed: %d", memfd);
+		return 1;
+	}
+
+	uint32_t len = npages * 4096;
+
+	int err = my_syscall2(__NR_ftruncate, memfd, len);
+	if (err) {
+		panic("ftruncate failed: %d", err);
+		return 1;
+	}
+
+	// int err = my_syscall4(__NR_fallocate, memfd, 0, 0, len);
+	// if (err) {
+	// 	panic("fallocate failed: %d", err);
+	// 	return 1;
+	// }
+
+	uint32_t addr = pagenum * 4096;
+	uint32_t prot = PROT_READ | PROT_WRITE;
+	uint32_t flags = MAP_PRIVATE | MAP_32BIT | MAP_FIXED;
+
+	if (my_syscall6(__NR_mmap2, addr, len, prot, flags, memfd, 0) != addr) {
+		panic("mmap failed!");
+		return 0;
+	}
+
+	return 1;
+}
+
+uint32_t VMM_PageCommitPhys(uint32_t pagenum, uint32_t npages, uint32_t physnum, uint32_t flags_)
+{
+	if (memfd < 0) {
+		panic("VMM_PageCommit not yet called to setup physmem");
+		return 1;
+	}
+
+	uint32_t addr = pagenum * 4096;
+	uint32_t len = npages * 4096;
+
+	uint32_t prot = PROT_READ;
+	if (flags_ & PC_WRITEABLE) {
+		prot |= PROT_WRITE;
+	} else {
+		prot |= PROT_EXEC;
+	}
+
+	uint32_t flags = MAP_PRIVATE | MAP_32BIT | MAP_FIXED;
+
+	if (my_syscall6(__NR_mmap2, addr, len, prot, flags, memfd, physnum) != addr) {
+		panic("mmap failed!");
+		return 0;
+	}
+
+	return 1;
+}
+
+uint32_t VMM_PageDecommit(uint32_t pagenum, uint32_t npages, uint32_t flags)
+{
+	uint32_t addr = pagenum * 4096;
+	uint32_t len = npages * 4096;
+	if (my_syscall2(__NR_munmap, addr, len)) {
+		panic("munmap failed!");
+		return 0;
+	}
+
+	return 1;
 }
 
 void VMMTerminateThread(VMM_THREAD_HANDLE thread)
 {
 	WSL9x_Printks("VMMTerminateThread not implemented!\n");
+}
+
+struct timespec64_ {
+	uint64_t tv_sec;
+	uint64_t tv_nsec;
+};
+
+static struct timespec64_ get_clock(uint32_t clock)
+{
+	struct timespec64_ tp;
+	int err = my_syscall2(__NR_clock_gettime64, CLOCK_BOOTTIME, &tp);
+	if (err) {
+		panic("sys_clock_gettime failed: err=%d", err);
+	}
+	return tp;
+}
+
+uint64_t VTD_Get_Real_Time(void)
+{
+	struct timespec64_ tp = get_clock(CLOCK_BOOTTIME);
+	uint64_t nsec_clocks = udiv64(tp.tv_nsec, WIN9X_NSEC_PER_REAL_CLOCK).quo;
+	uint64_t clocks = tp.tv_sec * WIN9X_REAL_CLOCK_HZ;
+	return clocks + nsec_clocks;
+}
+
+uint64_t VTD_Get_Date_And_Time(void)
+{
+	struct timespec64_ tp = get_clock(CLOCK_REALTIME);
+	tp.tv_sec -= WIN9X_WALL_CLOCK_EPOCH;
+	return tp.tv_sec + udiv64(tp.tv_nsec, NSEC_PER_SEC).quo;
 }

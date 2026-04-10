@@ -14,7 +14,9 @@ HMEM VMM_PageReserve(uint32_t virt_pfn, uint32_t npages, uint32_t flags);
 #define PR_4MEG     0x00000001  /* allocate on 4mb boundary */
 #define PR_STATIC   0x00000010  /* see PageReserve documentation */
 
-uint32_t VMM_PageCommit(uint32_t virt_pfn, uint32_t npages, uint32_t pager, uint32_t pagerdata, uint32_t flags);
+uint32_t VMM_PageCommit(uint32_t pagenum, uint32_t npages, uint32_t pager, uint32_t pagerdata, uint32_t flags);
+uint32_t VMM_PageCommitPhys(uint32_t pagenum, uint32_t npages, uint32_t phys, uint32_t flags);
+
 /* PageCommit default pager handle values */
 #define PD_ZEROINIT 0x00000001  /* swappable zero-initialized pages */
 #define PD_NOINIT   0x00000002  /* swappable uninitialized pages */
@@ -39,3 +41,5 @@ uint32_t VMM_PageCommit(uint32_t virt_pfn, uint32_t npages, uint32_t pager, uint
 uint32_t VMM_PageDecommit(uint32_t virt_pfn, uint32_t npages, uint32_t flags);
 
 uint32_t VMM_PageFree(HMEM mem, uint32_t flags);
+
+uint32_t VMM_CopyPageTable(uint32_t pagenum, uint32_t npages, uint32_t* buffer, uint32_t flags);

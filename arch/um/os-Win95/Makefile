@@ -4,7 +4,16 @@ KCOV_INSTRUMENT                := n
 ARCH_DIR := arch/um
 HOST_DIR := arch/$(HEADER_ARCH)
 
-obj-y = main.o os.o signal.o start_up.o process.o runtime.o string.o tlb.o tls.o
+obj-y = \
+	main.o \
+	mem.o \
+	os.o \
+	process.o \
+	runtime.o \
+	signal.o \
+	start_up.o \
+	string.o \
+	tls.o \
 
 win9x_user_cflags = \
 	-isystem $(srctree)/tools/include/nolibc \

@@ -22,7 +22,29 @@ int um_get_signals(void)
 
 int um_set_signals(int enable)
 {
-	int prev = signals_enabled;
-	signals_enabled = enable;
-	return prev;
+	int ret;
+	if (signals_enabled == enable)
+		return enable;
+
+	ret = signals_enabled;
+	if (enable)
+		unblock_signals();
+	else block_signals();
+
+	return ret;
+}
+
+int um_set_signals_trace(int enable)
+{
+	int ret;
+	if (signals_enabled == enable)
+		return enable;
+
+	ret = signals_enabled;
+	if (enable)
+		unblock_signals_trace();
+	else
+		block_signals_trace();
+
+	return ret;
 }

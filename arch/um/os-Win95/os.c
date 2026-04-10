@@ -11,47 +11,6 @@ void os_dump_core(void)
 	unimplemented();
 }
 
-/* memory management */
-
-int os_map_memory(void *virt, int fd, unsigned long long off,
-	unsigned long len, int r, int w, int x)
-{
-	unimplemented();
-}
-
-int os_protect_memory(void *addr, unsigned long len,
-	int r, int w, int x)
-{
-	unimplemented();
-}
-
-int os_unmap_memory(void *addr, int len)
-{
-	unimplemented();
-}
-
-int os_drop_memory(void *addr, int length)
-{
-	unimplemented();
-}
-
-int can_drop_memory(void)
-{
-	unimplemented();
-}
-
-int create_mem_file(unsigned long long len)
-{
-	/* TODO questionable, see if we can remove use of this */
-	unimplemented();
-}
-
-void stack_protections(unsigned long address)
-{
-	/* stack protection is a no-op under win9x */
-	(void)address;
-}
-
 /* idling */
 
 void os_idle_prepare(void)

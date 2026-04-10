@@ -7,6 +7,7 @@ DEFINE_PER_CPU_SHARED_ALIGNED(irq_cpustat_t, irq_stat);
 
 void __init init_IRQ(void)
 {
+	// irq_set_chip_and_handler(TIMER_IRQ, &alarm_irq_type, handle_percpu_irq);
 }
 
 int __init arch_probe_nr_irqs(void)

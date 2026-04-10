@@ -51,7 +51,11 @@ extern unsigned long *empty_zero_page;
 
 #define VMALLOC_OFFSET	(__va_space)
 #define VMALLOC_START	((high_physmem + VMALLOC_OFFSET) & ~(VMALLOC_OFFSET-1))
+#ifdef CONFIG_WIN9X
+#define VMALLOC_END	0xf0000000
+#else
 #define VMALLOC_END	(TASK_SIZE-2*PAGE_SIZE)
+#endif
 #define MODULES_VADDR	VMALLOC_START
 #define MODULES_END	VMALLOC_END
 
