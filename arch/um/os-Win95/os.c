@@ -11,18 +11,6 @@ void os_dump_core(void)
 	unimplemented();
 }
 
-/* idling */
-
-void os_idle_prepare(void)
-{
-	unimplemented();
-}
-
-void os_idle_sleep(void)
-{
-	unimplemented();
-}
-
 /* timers */
 
 long long os_nsecs(void)

@@ -30,6 +30,7 @@ static int do_set_thread_area(struct task_struct* task, struct user_desc *info)
 	    info->entry_number >= host_gdt_entry_tls_min + GDT_ENTRY_TLS_ENTRIES)
 		return -EINVAL;
 
+#ifndef CONFIG_WIN9X
 	if (using_seccomp) {
 		int idx = info->entry_number - host_gdt_entry_tls_min;
 		struct stub_data *data = (void *)task->mm->context.id.stack;
@@ -40,13 +41,11 @@ static int do_set_thread_area(struct task_struct* task, struct user_desc *info)
 		return 0;
 	}
 
-	ret = os_set_thread_area(info,
-#ifdef CONFIG_WIN9X
-		task->mm->context.id.th
+	ret = os_set_thread_area(info, task->mm->context.id.pid);
 #else
-		task->mm->context.id.pid
+	// TODO - win9x TLS support
+	ret = ENOTSUPP;
 #endif
-	);
 
 	if (ret)
 		printk(KERN_ERR "PTRACE_SET_THREAD_AREA failed, err = %d, "

@@ -1,18 +1,80 @@
+#include <as-layout.h>
+#include <asm/current.h>
+#include <generated/asm-offsets.h>
+#include <kern_util.h>
+#include <linux/kmsg_dump.h>
+#include <linux/sched.h>
+#include <linux/sched/task.h>
+#include <linux/string.h>
 #include <os.h>
 #include <registers.h>
 #include <sysdep/ptrace.h>
-#include <generated/asm-offsets.h>
-#include <linux/string.h>
 #include <wsl9x.h>
+
+#define INIT_JMP_NEW_THREAD 0
+#define INIT_JMP_CALLBACK 1
+#define INIT_JMP_HALT 2
+#define INIT_JMP_REBOOT 3
+#define INIT_JMP_RETURN 4
+
+static jmp_buf initial_jmpbuf;
+static int initial_jmpbuf_ok = 0;
 
 int start_idle_thread(void *stack, jmp_buf *switch_buf)
 {
+	initial_jmpbuf_ok = 1;
+	int n = setjmp(initial_jmpbuf);
+
+	if (n == 0) {
+		(*switch_buf)[0].JB_IP = (unsigned long) uml_finishsetup;
+		(*switch_buf)[0].JB_SP = (unsigned long) stack +
+			UM_THREAD_SIZE - sizeof(void *);
+	}
+
+	longjmp(*switch_buf, 1);
+	return 0;
+	// (*switch_buf)[0].JB_IP = (unsigned long) uml_finishsetup;
+	// (*switch_buf)[0].JB_SP = (unsigned long) stack +
+	// 	UM_THREAD_SIZE - sizeof(void *);
+
+	// initial_jmpbuf_ok = 1;
+	// switch_threads(&initial_jmpbuf, switch_buf);
+	// return 0;
+}
+
+void win9x_dump_log(void)
+{
+	kmsg_dump(KMSG_DUMP_UNDEF);
+}
+
+void wsl9x_resume(void)
+{
 	unimplemented();
+	schedule();
+	interrupt_end();
+	current_mm_sync();
+	struct task_struct* cur = current;
+	initial_jmpbuf_ok = 1;
+	switch_threads(&initial_jmpbuf, &cur->thread.switch_buf);
+}
+
+void os_idle_prepare(void)
+{
+}
+
+void os_idle_sleep(void)
+{
+	struct task_struct* cur = current;
+	if (initial_jmpbuf_ok) {
+		initial_jmpbuf_ok = 0;
+		switch_threads(&cur->thread.switch_buf, &initial_jmpbuf);
+	}
 }
 
 int start_userspace(struct mm_id *mm_id)
 {
-	unimplemented();
+	// I don't think we have to do anything here yet.
+	return 0;
 }
 
 void userspace(struct uml_pt_regs *regs)

@@ -32,6 +32,7 @@ size_t strlen(const char* s);
 #define __NR_memfd_create 356
 #define __NR_ftruncate 93
 #define __NR_fallocate 324
+#define __NR_mprotect 125
 
 void WSL9x_Printks(const char* str)
 {
@@ -211,4 +212,17 @@ uint64_t VTD_Get_Date_And_Time(void)
 	struct timespec64_ tp = get_clock(CLOCK_REALTIME);
 	tp.tv_sec -= WIN9X_WALL_CLOCK_EPOCH;
 	return tp.tv_sec + udiv64(tp.tv_nsec, NSEC_PER_SEC).quo;
+}
+
+uint32_t VMM_PageModifyPermissions(uint32_t pagenum, uint32_t npages, uint32_t perm_and, uint32_t perm_or)
+{
+	if (perm_and != ~PC_WRITEABLE || perm_or != 0) {
+		panic("unsupported flags in VMM_PageModifyPermissions");
+	}
+
+	if (my_syscall3(__NR_mprotect, pagenum * 4096, npages * 4096, PROT_READ)) {
+		panic("mprotect failed");
+	}
+
+	return 1;
 }

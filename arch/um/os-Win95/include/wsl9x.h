@@ -1,6 +1,6 @@
 #pragma once
 #include <wsl9x/prelude.h>
-#include <wsl9x/thread.h>
+#include <wsl9x/task.h>
 #include <wsl9x/mem.h>
 #include <wsl9x/time.h>
 
@@ -27,3 +27,5 @@ void WSL9x_Printks(const char* str);
 void WSL9x_Printk(const char* str, size_t len);
 void WSL9x_Log_Info(const char* str, size_t len);
 void WSL9x_Log_Warn(const char* str, size_t len);
+
+void wsl9x_resume(void);

@@ -44,12 +44,14 @@ SECTIONS
     *(.gnu.linkonce.t*)
   }
 
+#ifndef CONFIG_WIN9X
   . = ALIGN(PAGE_SIZE);
   .syscall_stub : {
 	__syscall_stub_start = .;
 	*(.__syscall_stub*)
 	__syscall_stub_end = .;
   }
+#endif
 
   /*
    * These are needed even in a static link, even if they wind up being empty.

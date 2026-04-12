@@ -15,7 +15,11 @@ endif
 KBUILD_RUSTFLAGS += --target=$(objtree)/scripts/target.json
 
 ifeq ($(CONFIG_X86_32),y)
+ifeq ($(CONFIG_WIN9X),y)
+START := 0xd0000000
+else
 START := 0x8048000
+endif
 
 KBUILD_LDFLAGS		+= -m elf_i386
 ELF_ARCH		:= i386

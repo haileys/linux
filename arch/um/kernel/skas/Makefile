@@ -3,10 +3,15 @@
 # Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
 #
 
-obj-y := mmu.o process.o syscall.o uaccess.o
+obj-y := process.o syscall.o uaccess.o
 
-ifneq ($(CONFIG_WIN9X),y)
-obj-y += stub.o stub_exe_embed.o
+obj-os-Linux := mmu.o stub.o stub_exe_embed.o
+obj-os-Win95 := mmu_win9x.o
+
+ifeq ($(CONFIG_WIN9X),y)
+obj-y += $(obj-os-Win95)
+else
+obj-y += $(obj-os-Linux)
 endif
 
 # Stub executable

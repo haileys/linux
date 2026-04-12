@@ -43,3 +43,5 @@ uint32_t VMM_PageDecommit(uint32_t virt_pfn, uint32_t npages, uint32_t flags);
 uint32_t VMM_PageFree(HMEM mem, uint32_t flags);
 
 uint32_t VMM_CopyPageTable(uint32_t pagenum, uint32_t npages, uint32_t* buffer, uint32_t flags);
+
+uint32_t VMM_PageModifyPermissions(uint32_t pagenum, uint32_t npages, uint32_t perm_and, uint32_t perm_or);

@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/* 
+/*
  * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
@@ -12,10 +12,12 @@
 #include <mm_id.h>
 
 typedef struct mm_context {
+#ifndef CONFIG_WIN9X
 	struct mm_id id;
 	struct mutex turnstile;
 
 	struct list_head list;
+#endif
 
 	/* Address range in need of a TLB sync */
 	spinlock_t sync_tlb_lock;
@@ -23,9 +25,15 @@ typedef struct mm_context {
 	unsigned long sync_tlb_range_to;
 } mm_context_t;
 
+#ifdef CONFIG_WIN9X
+#  define INIT_MM_TURNSTILE
+#else
+#  define INIT_MM_TURNSTILE .turnstile = __MUTEX_INITIALIZER(mm.context.turnstile),
+#endif
+
 #define INIT_MM_CONTEXT(mm)						\
 	.context = {							\
-		.turnstile = __MUTEX_INITIALIZER(mm.context.turnstile),	\
+		INIT_MM_TURNSTILE	\
 		.sync_tlb_lock = __SPIN_LOCK_INITIALIZER(mm.context.sync_tlb_lock), \
 	}
 

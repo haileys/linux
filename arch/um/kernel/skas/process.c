@@ -46,16 +46,17 @@ int __init start_uml(void)
 	init_task.thread.request.thread.proc = start_kernel_proc;
 	init_task.thread.request.thread.arg = NULL;
 
-#ifdef CONFIG_WIN9X
-	uml_finishsetup();
-	// uml_finishsetup drops straight into userspace
-	unreachable();
-#else
+// #ifdef CONFIG_WIN9X
+// 	uml_finishsetup();
+// // 	// uml_finishsetup drops straight into userspace
+// 	unreachable();
+// #else
 	return start_idle_thread(task_stack_page(&init_task),
 				 &init_task.thread.switch_buf);
-#endif
+// #endif
 }
 
+#ifndef CONFIG_WIN9X
 unsigned long current_stub_stack(void)
 {
 	if (current->mm == NULL)
@@ -71,6 +72,7 @@ struct mm_id *current_mm_id(void)
 
 	return &current->mm->context.id;
 }
+#endif
 
 void current_mm_sync(void)
 {

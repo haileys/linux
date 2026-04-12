@@ -6,7 +6,6 @@ HOST_DIR := arch/$(HEADER_ARCH)
 
 obj-y = \
 	main.o \
-	mem.o \
 	os.o \
 	process.o \
 	runtime.o \

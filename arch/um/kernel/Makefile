@@ -20,7 +20,7 @@ obj-y = exec.o exitcode.o ksyms.o mem.o physmem.o \
 	um_arch.o umid.o kmsg_dump.o capflags.o skas/
 obj-y += load_file.o
 
-obj-os-Linux = config.o irq.o time.o
+obj-os-Linux = config.o irq.o time.o trap.o
 obj-os-Win9x = irq_win9x.o time_win9x.o
 
 ifeq ($(CONFIG_WIN9X),y)
@@ -37,7 +37,7 @@ obj-$(CONFIG_STACKTRACE) += stacktrace.o
 obj-$(CONFIG_SMP) += smp.o
 
 ifneq ($(CONFIG_WIN9X),y)
-USER_OBJS := config.o trap.o
+USER_OBJS := config.o
 endif
 
 include $(srctree)/arch/um/scripts/Makefile.rules

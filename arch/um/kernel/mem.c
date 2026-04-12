@@ -159,5 +159,11 @@ void mark_rodata_ro(void)
 	unsigned long rodata_start = PFN_ALIGN(__start_rodata);
 	unsigned long rodata_end = PFN_ALIGN(__end_rodata);
 
+#ifdef CONFIG_WIN9X
+	uint32_t pagenum = rodata_start >> PAGE_SHIFT;
+	uint32_t npages = (rodata_end - rodata_start) >> PAGE_SHIFT;
+	VMM_PageModifyPermissions(pagenum, npages, ~PC_WRITEABLE, 0);
+#else
 	os_protect_memory((void *)rodata_start, rodata_end - rodata_start, 1, 0, 0);
+#endif
 }

@@ -25,9 +25,7 @@ static void kill_one_process(struct task_struct *p)
 		return;
 
 #ifdef CONFIG_WIN9X
-	VMM_THREAD_HANDLE th = t->mm->context.id.th;
-	task_unlock(t);
-	VMMTerminateThread(th);
+	panic("TODO - what should do for win9x in kill_one_process?");
 #else
 	int pid = t->mm->context.id.pid;
 	task_unlock(t);
