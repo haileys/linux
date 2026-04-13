@@ -4,7 +4,7 @@
 typedef struct VirtualMemory* HMEM;
 #define HMEM_FAIL ((HMEM)(-1))
 
-HMEM VMM_PageReserve(uint32_t virt_pfn, uint32_t npages, uint32_t flags);
+uint32_t VMM_PageReserve(uint32_t virt_pfn, uint32_t npages, uint32_t flags);
 /* PageReserve arena values */
 #define PR_PRIVATE  0x80000400  /* anywhere in private arena */
 #define PR_SHARED   0x80060000  /* anywhere in shared arena */
@@ -45,3 +45,5 @@ uint32_t VMM_PageFree(HMEM mem, uint32_t flags);
 uint32_t VMM_CopyPageTable(uint32_t pagenum, uint32_t npages, uint32_t* buffer, uint32_t flags);
 
 uint32_t VMM_PageModifyPermissions(uint32_t pagenum, uint32_t npages, uint32_t perm_and, uint32_t perm_or);
+
+uint32_t VMM_GetFreePageCount(uint32_t flags);

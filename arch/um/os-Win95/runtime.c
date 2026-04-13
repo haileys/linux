@@ -68,7 +68,7 @@ void WSL9x_Log_Warn(const char* str, size_t len)
 	WSL9x_Printk(str, len);
 }
 
-HMEM VMM_PageReserve(uint32_t virt_pfn, uint32_t npages, uint32_t flags_)
+uint32_t VMM_PageReserve(uint32_t virt_pfn, uint32_t npages, uint32_t flags_)
 {
 	if (virt_pfn != PR_SYSTEM) {
 		panic("virt_pfn != PR_SYSTEM");
