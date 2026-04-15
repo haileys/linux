@@ -1,0 +1,6 @@
+#!/bin/bash -xeu
+rm -rf rootfs
+mkdir -p rootfs/bin
+cp busybox-1.36.1/busybox rootfs/bin/
+cp rootfs/bin/busybox rootfs/bin/sh
+usr/gen_initramfs.sh -o rootfs.cpio rootfs/
