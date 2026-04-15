@@ -1,13 +1,13 @@
-#include "linux/delay.h"
-#include "linux/stddef.h"
-#include "vdso/time64.h"
-#include <linux/atomic/atomic-instrumented.h>
-#include <linux/smp.h>
 #include <linux/clockchips.h>
-#include <linux/time.h>
-#include <linux/init.h>
 #include <linux/clocksource.h>
+#include <linux/delay.h>
+#include <linux/init.h>
 #include <linux/interrupt.h>
+#include <linux/smp.h>
+#include <linux/stddef.h>
+#include <linux/time.h>
+#include <asm/div64.h>
+#include <vdso/time64.h>
 #include <wsl9x.h>
 #include <wsl9x/time.h>
 
@@ -132,7 +132,7 @@ void read_persistent_clock64(struct timespec64 *ts)
 {
 	u64 msecs = VTD_Get_Date_And_Time() + WIN9X_WALL_CLOCK_EPOCH;
 
-	struct u32divrem d = udiv64(msecs, MSEC_PER_SEC);
-	ts->tv_sec = d.quo;
-	ts->tv_nsec = d.rem * NSEC_PER_MSEC;
+	u32 remainder = 0;
+	ts->tv_sec = div_u64_rem(msecs, MSEC_PER_SEC, &remainder);
+	ts->tv_nsec = remainder * NSEC_PER_MSEC;
 }
