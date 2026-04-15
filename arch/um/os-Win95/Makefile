@@ -8,11 +8,16 @@ obj-y = \
 	main.o \
 	os.o \
 	process.o \
-	runtime.o \
 	signal.o \
 	start_up.o \
 	string.o \
-	tls.o \
+	tls.o
+
+ifdef CONFIG_WSL9X_RUNTIME
+obj-y += runtime.o
+else
+obj-y += vxdwraps.o
+endif
 
 win9x_user_cflags = \
 	-isystem $(srctree)/tools/include/nolibc \

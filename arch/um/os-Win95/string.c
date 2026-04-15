@@ -6,7 +6,7 @@
 
 #include <linux/types.h>
 #include <linux/string.h>
-
+#include <wsl9x.h>
 
 /* might be ignored by the compiler without -ffreestanding, then found as
  * missing.
@@ -96,4 +96,9 @@ char *strstr(const char *haystack, const char *needle)
 	}
 
 	return NULL;
+}
+
+void WSL9x_Printks(const char* str)
+{
+	WSL9x_Printk(str, strlen(str));
 }

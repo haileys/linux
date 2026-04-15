@@ -34,11 +34,6 @@ size_t strlen(const char* s);
 #define __NR_fallocate 324
 #define __NR_mprotect 125
 
-void WSL9x_Printks(const char* str)
-{
-	WSL9x_Printk(str, strlen(str));
-}
-
 static void sys_write_all(int fd, const char* buf, size_t len)
 {
 	while (len) {

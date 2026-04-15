@@ -1,5 +1,6 @@
 #include <as-layout.h>
 #include <init.h>
+#include <wsl9x.h>
 
 const char * const elf_aux_platform = "i386";
 uint32_t elf_aux_hwcap = 0;

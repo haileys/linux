@@ -5,6 +5,7 @@ typedef struct VirtualMemory* HMEM;
 #define HMEM_FAIL ((HMEM)(-1))
 
 uint32_t VMM_PageReserve(uint32_t virt_pfn, uint32_t npages, uint32_t flags);
+
 /* PageReserve arena values */
 #define PR_PRIVATE  0x80000400  /* anywhere in private arena */
 #define PR_SHARED   0x80060000  /* anywhere in shared arena */
@@ -15,6 +16,7 @@ uint32_t VMM_PageReserve(uint32_t virt_pfn, uint32_t npages, uint32_t flags);
 #define PR_STATIC   0x00000010  /* see PageReserve documentation */
 
 uint32_t VMM_PageCommit(uint32_t pagenum, uint32_t npages, uint32_t pager, uint32_t pagerdata, uint32_t flags);
+
 uint32_t VMM_PageCommitPhys(uint32_t pagenum, uint32_t npages, uint32_t phys, uint32_t flags);
 
 /* PageCommit default pager handle values */
