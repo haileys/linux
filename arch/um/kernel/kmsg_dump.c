@@ -6,7 +6,9 @@
 #include <shared/init.h>
 #include <shared/kern.h>
 #include <os.h>
+#ifdef CONFIG_WIN9X
 #include <wsl9x.h>
+#endif
 
 static void kmsg_dumper_stdout(struct kmsg_dumper *dumper,
 				struct kmsg_dump_detail *detail)
@@ -45,9 +47,18 @@ static void kmsg_dumper_stdout(struct kmsg_dumper *dumper,
 
 	kmsg_dump_rewind(&iter);
 
+#ifdef CONFIG_WIN9X
 	WSL9x_Printks("kmsg_dump:\n");
+#else
+	printf("kmsg_dump:\n");
+#endif
 	while (kmsg_dump_get_line(&iter, true, line, sizeof(line), &len)) {
+#ifdef CONFIG_WIN9X
 		WSL9x_Printk(line, len);
+#else
+		line[len] = '\0';
+		printf("%s", line);
+#endif
 	}
 
 	spin_unlock_irqrestore(&lock, flags);

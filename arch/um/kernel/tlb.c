@@ -14,7 +14,10 @@
 #include <os.h>
 #include <skas.h>
 #include <kern_util.h>
+
+#ifdef CONFIG_WIN9X
 #include <wsl9x/mem.h>
+#endif
 
 #ifndef CONFIG_WIN9X
 struct vm_ops {

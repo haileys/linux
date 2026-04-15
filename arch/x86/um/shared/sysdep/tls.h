@@ -2,7 +2,9 @@
 #ifndef _SYSDEP_TLS_H
 #define _SYSDEP_TLS_H
 
+#ifdef CONFIG_WIN9X
 #include <wsl9x.h>
+#endif
 
 #ifdef __UM_HOST__
 
