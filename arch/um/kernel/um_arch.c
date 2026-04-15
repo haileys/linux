@@ -3,6 +3,7 @@
  * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
+#include "linux/printk.h"
 #include <linux/cpu.h>
 #include <linux/delay.h>
 #include <linux/init.h>
@@ -378,7 +379,7 @@ int __init linux_main(int argc, char **argv, char **envp)
 	physmem_size = PAGE_ALIGN(physmem_size);
 
 #ifdef CONFIG_WIN9X
-	uml_physmem = allocate_physmem_win9x();
+	uml_physmem = win9x_allocate_physmem();
 	uml_reserved = uml_physmem + (1 << 22);
 #else
 	uml_physmem = (unsigned long) __binary_start & PAGE_MASK;
@@ -398,17 +399,25 @@ int __init linux_main(int argc, char **argv, char **envp)
 
 	high_physmem = uml_physmem + physmem_size;
 
-	start_vm = VMALLOC_START;
+#ifdef CONFIG_WIN9X
+	pr_info("win9x_allocate_physmem: allocated 0x%08lx-0x%08lx", uml_physmem, high_physmem);
+#endif
 
 	ulong virtmem_size = physmem_size;
-#ifndef CONFIG_WIN9X
+
+#ifdef CONFIG_WIN9X
+	start_vm = win9x_reserve_virtmem(virtmem_size);
+	end_vm = start_vm + virtmem_size;
+	pr_info("win9x_reserve_virtmem: reserved 0x%08lx-0x%08lx", start_vm, end_vm);
+#else
+	start_vm = VMALLOC_START;
 	stack = (unsigned long) argv;
 	stack &= ~(1024 * 1024 - 1);
 	avail = stack - start_vm;
 	if (physmem_size > avail)
 		virtmem_size = avail;
-#endif
 	end_vm = start_vm + virtmem_size;
+#endif
 
 	if (virtmem_size < physmem_size)
 		os_info("Kernel virtual memory size shrunk to %lu bytes\n",

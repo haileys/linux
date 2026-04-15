@@ -27,6 +27,12 @@ int __init main(int argc, char **argv, char **envp)
 	return 0;
 }
 
+void __noreturn unimplemented(void)
+{
+	panic("unimplemented");
+	for (;;) ;
+}
+
 /* HARNESS FUNCS: */
 
 void _start(void);

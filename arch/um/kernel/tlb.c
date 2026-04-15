@@ -3,9 +3,11 @@
  * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
+#include "linux/printk.h"
 #include <linux/mm.h>
 #include <linux/module.h>
 #include <linux/sched/signal.h>
+#include <vdso/page.h>
 
 #include <asm/tlbflush.h>
 #include <asm/mmu_context.h>
@@ -56,6 +58,41 @@ void report_enomem(void)
 			"vm.max_map_count has been reached.\n");
 }
 
+#ifdef CONFIG_WIN9X
+// takes PFN of UML phys memory and returns PFN of actual underlying phys memory
+static uint32_t underlying_phys(uint32_t uml_physnum)
+{
+	// lookup actual physical page backing UML phys page
+	uint32_t pte;
+	uint32_t mapped_physnum = (uml_physmem >> PAGE_SHIFT) + uml_physnum;
+	if (!VMM_CopyPageTable(mapped_physnum, 1, &pte, 0)) {
+		panic("VMM_CopyPageTable failed");
+	}
+
+	return pte >> PAGE_SHIFT;
+}
+
+static void page_commit_phys(uint32_t pagenum, uint32_t uml_physnum, uint32_t flags)
+{
+	uint32_t physnum = underlying_phys(uml_physnum);
+
+	if (flags & ~(PC_INCR | PC_USER | PC_WRITEABLE | PC_LOCKED)) {
+		panic("wrong flags to VMM_PageCommitPhys - will always fail");
+	}
+
+	if (!VMM_PageCommitPhys(pagenum, 1, physnum, flags)) {
+		panic("VMM_PageCommitPhys failed");
+	}
+}
+
+static void page_decommit(uint32_t pagenum)
+{
+	if (!VMM_PageDecommit(pagenum, 1, 0)) {
+		panic("VMM_PageDecommit failed");
+	}
+}
+#endif
+
 static inline int update_pte_range(pmd_t *pmd, unsigned long addr,
 				   unsigned long end,
 				   struct vm_ops *ops)
@@ -92,9 +129,9 @@ static inline int update_pte_range(pmd_t *pmd, unsigned long addr,
 		}
 
 		if (flags & PC_PRESENT) {
-			VMM_PageCommitPhys(pagenum, 1, physnum, flags);
+			page_commit_phys(pagenum, physnum, flags & ~PC_PRESENT);
 		} else {
-			VMM_PageDecommit(pagenum, 1, 0);
+			page_decommit(pagenum);
 		}
 #else
 		if (pte_present(*pte)) {

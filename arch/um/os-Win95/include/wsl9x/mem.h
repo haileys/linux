@@ -49,3 +49,9 @@ uint32_t VMM_CopyPageTable(uint32_t pagenum, uint32_t npages, uint32_t* buffer, 
 uint32_t VMM_PageModifyPermissions(uint32_t pagenum, uint32_t npages, uint32_t perm_and, uint32_t perm_or);
 
 uint32_t VMM_GetFreePageCount(uint32_t flags);
+
+typedef struct MemoryContext* HCONTEXT;
+HCONTEXT VMM_ContextCreate(void);
+uint32_t VMM_ContextDestroy(HCONTEXT);
+HCONTEXT VMM_ContextSwitch(HCONTEXT);
+HCONTEXT VMM_GetCurrentContext(void);

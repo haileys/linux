@@ -4,12 +4,7 @@
 #include <wsl9x/mem.h>
 #include <wsl9x/time.h>
 
-static inline __noreturn void unimplemented(void)
-{
-	__asm__ volatile ("int3" ::: "memory");
-	__asm__ volatile ("ud2" ::: "memory");
-	for (;;) ;
-}
+void __noreturn unimplemented(void);
 
 struct u32divrem {
 	uint32_t quo;

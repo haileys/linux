@@ -97,27 +97,27 @@ typedef struct {
 
 
 typedef struct {
-	uint32_t Flags;          // Thread status flags
-	uint32_t Reserved1;      // Used internally by VMM
-	uint32_t Reserved2;      // Used internally by VMM
-	uint32_t Signature;
-	VMM_Client_Regs* ClientPtr; // Client registers of thread
-	VMM_VMCB* VMHandle;       // VM that thread is part of
-	uint16_t ThreadId;       // Unique Thread ID
-	uint16_t PMLockOrigSS;   // Original SS:ESP before lock stack
-	uint32_t PMLockOrigESP;
-	uint32_t PMLockOrigEIP;  // Original CS:EIP before lock stack
-	uint32_t PMLockStackCount;
-	uint16_t PMLockOrigCS;
-	uint16_t PMPSPSelector;
-	uint32_t ThreadType;     // dword passed to VMMCreateThread
-	uint16_t pad1;           // reusable; for dword align
-	uint8_t  pad2;           // reusable; for dword align
-	uint8_t  extErrLocus;    // extended error Locus
-	uint16_t extErr;         // extended error Code
-	uint8_t  extErrAction;   //      "   "   Action
-	uint8_t  extErrClass;    //      "   "   Class
-	uint32_t extErrPtr;      //      "   pointer
+	uint32_t Flags;             // 0x00  Thread status flags
+	uint32_t Reserved1;         // 0x04  Used internally by VMM
+	uint32_t Reserved2;         // 0x08  Used internally by VMM
+	uint32_t Signature;	    // 0x0c
+	VMM_Client_Regs* ClientPtr; // 0x10  Client registers of thread
+	VMM_VMCB* VMHandle;         // 0x14  VM that thread is part of
+	uint16_t ThreadId;          // 0x18  Unique Thread ID
+	uint16_t PMLockOrigSS;      // 0x1a  Original SS:ESP before lock stack
+	uint32_t PMLockOrigESP;     // 0x1c
+	uint32_t PMLockOrigEIP;     // 0x20  Original CS:EIP before lock stack
+	uint32_t PMLockStackCount;  // 0x24
+	uint16_t PMLockOrigCS;      // 0x28
+	uint16_t PMPSPSelector;     // 0x2a
+	uint32_t ThreadType;        // 0x2c  dword passed to VMMCreateThread
+	uint16_t pad1;              // 0x30  reusable; for dword align
+	uint8_t  pad2;              // 0x32  reusable; for dword align
+	uint8_t  extErrLocus;       // 0x33  extended error Locus
+	uint16_t extErr;            // 0x34  extended error Code
+	uint8_t  extErrAction;      //            "   "   Action
+	uint8_t  extErrClass;       //            "   "   Class
+	uint32_t extErrPtr;         //            "   pointer
 } VMM_TCB;
 
 #define THFLAG_SUSPENDED_BIT        0x03   // Thread not scheduled
@@ -146,3 +146,6 @@ void VMMTerminateThread(VMM_THREAD_HANDLE thread);
 
 void VMM_Save_Client_State(VMM_Client_Regs* regs);
 void VMM_Restore_Client_State(const VMM_Client_Regs* regs);
+
+void VMM_Begin_Critical_Section(uint32_t flags);
+void VMM_End_Critical_Section(void);

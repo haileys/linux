@@ -62,6 +62,19 @@ int kmalloc_ok = 0;
 static unsigned long brk_end;
 #endif
 
+#ifdef CONFIG_WIN9X
+u32 __init win9x_reserve_virtmem(u32 size)
+{
+	u32 npages = size >> PAGE_SHIFT;
+	u32 addr = VMM_PageReserve(PR_SYSTEM, npages, PR_FIXED | PR_4MEG);
+	if (addr == (u32)HMEM_FAIL) {
+		panic("win9x_reserve_virtmem: VMM_PageReserve failed: npages=%d", npages);
+	}
+
+	return addr;
+}
+#endif
+
 void __init arch_mm_preinit(void)
 {
 	/* Safe to call after jump_label_init(). Enables KASAN. */

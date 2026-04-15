@@ -11,6 +11,10 @@
 #include <linux/spinlock.h>
 #include <mm_id.h>
 
+#ifdef CONFIG_WIN9X
+#include <wsl9x/mem.h>
+#endif
+
 typedef struct mm_context {
 #ifndef CONFIG_WIN9X
 	struct mm_id id;
@@ -18,6 +22,7 @@ typedef struct mm_context {
 
 	struct list_head list;
 #endif
+	HCONTEXT handle;
 
 	/* Address range in need of a TLB sync */
 	spinlock_t sync_tlb_lock;

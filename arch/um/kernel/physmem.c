@@ -20,9 +20,7 @@
 #include <wsl9x.h>
 #endif
 
-#ifdef CONFIG_WIN9X
-static HMEM physmem_handle = 0;
-#else
+#ifndef CONFIG_WIN9X
 static int physmem_fd = -1;
 #endif
 
@@ -54,20 +52,16 @@ void map_memory(unsigned long virt, unsigned long phys, unsigned long len,
 }
 
 #ifdef CONFIG_WIN9X
-u32 __init allocate_physmem_win9x(void)
+u32 __init win9x_allocate_physmem(void)
 {
 	u32 npages = physmem_size >> PAGE_SHIFT;
-	physmem_handle = VMM_PageReserve(PR_SYSTEM, npages, PR_FIXED | PR_4MEG);
-	if (physmem_handle == HMEM_FAIL) {
-		panic("VMM_PageReserve failed; npages=%d", npages);
+	u32 addr = VMM_PageReserve(PR_SYSTEM, npages, PR_FIXED | PR_4MEG);
+	if (addr == (u32)HMEM_FAIL) {
+		panic("win9x_allocate_physmem: VMM_PageReserve failed: npages=%d", npages);
 	}
 
-	// handle returned by VMM_PageReserve is also base address for
-	// reserved virtual address range:
-	u32 addr = (u32)physmem_handle;
-
-	if (!VMM_PageCommit(addr >> PAGE_SHIFT, npages, PD_FIXEDZERO, 0, PC_FIXED)) {
-		panic("VMM_PageCommit failed; addr=0x%08x, npages=%d", addr, npages);
+	if (!VMM_PageCommit(addr >> PAGE_SHIFT, npages, PD_FIXEDZERO, 0, PC_FIXED | PC_LOCKED | PC_WRITEABLE)) {
+		panic("win9x_allocate_physmem: VMM_PageCommit failed: addr=0x%08x, npages=%d", addr, npages);
 	}
 
 	return addr;
