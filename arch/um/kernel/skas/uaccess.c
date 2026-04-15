@@ -49,15 +49,10 @@ static pte_t *maybe_map(unsigned long virt, int is_write)
 
 	if ((pte == NULL) || !pte_present(*pte) ||
 	    (is_write && !pte_write(*pte))) {
-#ifdef CONFIG_WIN9X
-		// TODO win9x handle_page_fault not yet implemented
-		return NULL;
-#else
 		int err, dummy_code;
 		err = handle_page_fault(virt, 0, is_write, 1, &dummy_code);
 		if (err)
 			return NULL;
-#endif
 		pte = virt_to_pte(current->mm, virt);
 	}
 	if (!pte_present(*pte))

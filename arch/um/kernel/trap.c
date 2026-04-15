@@ -236,6 +236,7 @@ out_of_memory:
 	return 0;
 }
 
+#ifndef CONFIG_WIN9X
 static void show_segv_info(struct uml_pt_regs *regs)
 {
 	struct task_struct *tsk = current;
@@ -428,3 +429,4 @@ void winch(int sig, struct siginfo *unused_si, struct uml_pt_regs *regs,
 {
 	do_IRQ(WINCH_IRQ, regs);
 }
+#endif
