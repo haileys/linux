@@ -5,6 +5,7 @@ ARCH_DIR := arch/um
 HOST_DIR := arch/$(HEADER_ARCH)
 
 obj-y = \
+	boot_console.o \
 	main.o \
 	os.o \
 	process.o \
