@@ -15,6 +15,7 @@
 #include <wsl9x.h>
 #include <wsl9x/task.h>
 #include <wsl9x/descriptor.h>
+#include <wsl9x/entry.h>
 #include <uapi/linux/errno.h>
 
 #define INIT_JMP_NEW_THREAD 0
@@ -24,7 +25,9 @@
 #define INIT_JMP_RETURN 4
 
 static jmp_buf top_jmpbuf;
-static int top_jmpbuf_ok = 0;
+static volatile int top_jmpbuf_ok = 0;
+
+static jmp_buf* resume_jmpbuf;
 
 uint16_t wsl9x_user_code;
 uint16_t wsl9x_user_data;
@@ -51,7 +54,7 @@ int start_idle_thread(void *stack, jmp_buf *switch_buf)
 		longjmp(*switch_buf, 1);
 	}
 
-	return 0;
+	return n;
 	// (*switch_buf)[0].JB_IP = (unsigned long) uml_finishsetup;
 	// (*switch_buf)[0].JB_SP = (unsigned long) stack +
 	// 	UM_THREAD_SIZE - sizeof(void *);
@@ -61,12 +64,60 @@ int start_idle_thread(void *stack, jmp_buf *switch_buf)
 	// return 0;
 }
 
+static jmp_buf* take_top_jmpbuf(void)
+{
+	if (!xchg(&top_jmpbuf_ok, 0)) {
+		panic("top_jmpbuf not ok");
+	}
+
+	return &top_jmpbuf;
+}
+
+static void wsl9x_yield(jmp_buf *me, enum wsl9x_result result)
+{
+	if (UML_SETJMP(me) == 0) {
+		resume_jmpbuf = me;
+
+		jmp_buf *top = take_top_jmpbuf();
+		UML_LONGJMP(top, result);
+	}
+}
+
+enum wsl9x_result wsl9x_resume(void)
+{
+	top_jmpbuf_ok = 1;
+	int n = UML_SETJMP(&top_jmpbuf);
+
+	if (n == 0) {
+		jmp_buf* resume = xchg(&resume_jmpbuf, NULL);
+		if (!resume) {
+			panic("resume_jmpbuf not ok");
+		}
+
+		UML_LONGJMP(resume, 1);
+	}
+
+	return n;
+}
+
+void os_dump_core(void)
+{
+	if (xchg(&top_jmpbuf_ok, 0)) {
+		longjmp(top_jmpbuf, WSL9X_PANIC);
+	}
+
+	// no jmpbuf in panic, nothing to do but crash it hard
+	__asm__ volatile ("ud2");
+	for (;;) ;
+}
+
 void win9x_dump_log(void);
 void win9x_dump_log(void)
 {
 	kmsg_dump(KMSG_DUMP_UNDEF);
 }
 
+/*
 void wsl9x_resume(void)
 {
 	unimplemented();
@@ -78,18 +129,14 @@ void wsl9x_resume(void)
 	top_jmpbuf_ok = 1;
 	switch_threads(&top_jmpbuf, &cur->thread.switch_buf);
 }
+*/
 
 void os_idle_prepare(void)
 {
 }
 
-void os_idle_sleep(void)
-{
-	if (xchg(&top_jmpbuf_ok, 0)) {
-		switch_threads(&current->thread.switch_buf, &top_jmpbuf);
-	} else {
-		panic("top_jmpbuf not ok");
-	}
+void os_idle_sleep(void) {
+	wsl9x_yield(&current->thread.switch_buf, WSL9X_IDLE);
 }
 
 struct thread_init_data {
@@ -160,6 +207,8 @@ void new_thread(void *stack, jmp_buf *buf, void (*handler)(void))
 
 void switch_threads(jmp_buf *me, jmp_buf *you)
 {
+	wsl9x_yield(me, WSL9X_YIELD);
+
 	if (UML_SETJMP(me) == 0)
 		UML_LONGJMP(you, 1);
 }

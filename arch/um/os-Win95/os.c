@@ -3,13 +3,6 @@
 #include <linux/string.h>
 #include <wsl9x.h>
 
-/* debugging */
-
-void os_dump_core(void)
-{
-	unimplemented();
-}
-
 /* timers */
 
 long long os_nsecs(void)

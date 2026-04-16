@@ -1,25 +1,19 @@
 #include <as-layout.h>
 #include <linux/types.h>
 #include <linux/panic.h>
-#include <init.h>
+#include <linux/atomic.h>
 #include <wsl9x.h>
 #include <wsl9x/descriptor.h>
+#include <wsl9x/entry.h>
+
+static int started = 0;
 
 const char * const elf_aux_platform = "i386";
 uint32_t elf_aux_hwcap = 0;
 
-void wsl9x_resume(void);
-
 static void init_hwcap(void)
 {
 	asm volatile ("cpuid" : "=d"(elf_aux_hwcap) : "a"(1) : "%ecx", "%ebx");
-}
-
-void __init main(int argc, char **argv, char **envp)
-{
-	if (linux_main(argc, argv, envp)) {
-		panic("linux_main error");
-	}
 }
 
 void __noreturn unimplemented(void)
@@ -28,31 +22,25 @@ void __noreturn unimplemented(void)
 	for (;;) ;
 }
 
-/* HARNESS FUNCS: */
-
-static int started = 0;
-
-void _start(void);
-void _start(void)
+static enum wsl9x_result wsl9x_start(struct wsl9x_start_param* start)
 {
-	// _start serves as a dual entry point for the wsl9x VXD.
-	// if the kernel is already started, just resume it until next idle:
-	if (started) {
-		wsl9x_resume();
-		return;
+	if (xchg(&started, 1)) {
+		panic("wsl9x already started");
 	}
 
-	started = 1;
 	init_hwcap();
 	wsl9x_allocate_descriptors();
+	return linux_main(start->argc, start->argv, start->envp);
+}
 
-	char* argv[] = {
-		"vmlinux",
-		"init=/bin/sh",
-		"rdinit=/bin/sh",
-	};
-
-	char* envp[] = { 0 };
-
-	main(sizeof(argv) / sizeof(*argv), argv, envp);
+void _start(struct wsl9x_entry* entry)
+{
+	switch (entry->reason) {
+	case WSL9X_START:
+		entry->result = wsl9x_start(&entry->as.start);
+		return;
+	case WSL9X_RESUME:
+		entry->result = wsl9x_resume();
+		return;
+	}
 }
