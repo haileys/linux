@@ -140,12 +140,29 @@ typedef struct {
 #define THFLAG_EXTENDED_HANDLES            (1L << THFLAG_EXTENDED_HANDLES_BIT)
 
 
-typedef VMM_TCB* VMM_THREAD_HANDLE;
-
-void VMMTerminateThread(VMM_THREAD_HANDLE thread);
+typedef VMM_TCB* HTHREAD;
 
 void VMM_Save_Client_State(VMM_Client_Regs* regs);
 void VMM_Restore_Client_State(const VMM_Client_Regs* regs);
 
 void VMM_Begin_Critical_Section(uint32_t flags);
 void VMM_End_Critical_Section(void);
+
+// receives ref data in EDX:
+typedef void(*VMM_Thread_InitCallback)(void);
+
+HTHREAD VMM_VMMCreateThread(
+	uint16_t initial_ss,
+	uint32_t initial_esp,
+	uint16_t initial_cs,
+	uint32_t initial_eip,
+	uint16_t initial_ds,
+	uint16_t initial_es,
+	uint32_t thread_type,
+	VMM_Thread_InitCallback init_callback,
+	void* ref_data
+);
+
+void VMM_VMMTerminateThread(HTHREAD thread);
+
+void VMM_Call_On_My_Stack(void(*callback)(uint32_t), uint32_t param, void* stack, size_t stack_size);

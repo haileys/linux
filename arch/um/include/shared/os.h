@@ -303,9 +303,14 @@ int map(struct mm_id *mm_idp, unsigned long virt,
 int unmap(struct mm_id *mm_idp, unsigned long addr, unsigned long len);
 
 /* skas/process.c */
+#ifndef CONFIG_WIN9X
 extern int is_skas_winch(int pid, int fd, void *data);
 extern int start_userspace(struct mm_id *mm_id);
+#endif
 extern void userspace(struct uml_pt_regs *regs);
+// #else
+// extern void userspace(struct task_struct *task);
+// #endif
 extern void new_thread(void *stack, jmp_buf *buf, void (*handler)(void));
 extern void switch_threads(jmp_buf *me, jmp_buf *you);
 extern int start_idle_thread(void *stack, jmp_buf *switch_buf);

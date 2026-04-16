@@ -1,8 +1,6 @@
 #include <init.h>
 #include <os.h>
-#include <stdarg.h>
 #include <linux/string.h>
-#include "win9x.h"
 #include <wsl9x.h>
 
 /* debugging */

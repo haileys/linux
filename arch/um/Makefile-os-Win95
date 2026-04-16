@@ -1,5 +1,6 @@
 KBUILD_CFLAGS += \
-    -idirafter $(srctree)/$(ARCH_DIR)/os-Win95/include
+    -idirafter $(srctree)/$(ARCH_DIR)/os-Win95/include \
+    -Werror -Wno-error=unused-function -Wno-error=unused-variable
 
 USER_CFLAGS += -D_GNU_SOURCE -nostdinc -nostdlib \
     -I $(srctree)/$(ARCH_DIR)/os-Win95/include

@@ -1,8 +1,7 @@
 #pragma once
 #include "prelude.h"
 
-typedef struct VirtualMemory* HMEM;
-#define HMEM_FAIL ((HMEM)(-1))
+#define PAGE_RESERVE_FAIL ((uint32_t)(-1))
 
 uint32_t VMM_PageReserve(uint32_t virt_pfn, uint32_t npages, uint32_t flags);
 
@@ -42,7 +41,7 @@ uint32_t VMM_PageCommitPhys(uint32_t pagenum, uint32_t npages, uint32_t phys, ui
 
 uint32_t VMM_PageDecommit(uint32_t virt_pfn, uint32_t npages, uint32_t flags);
 
-uint32_t VMM_PageFree(HMEM mem, uint32_t flags);
+uint32_t VMM_PageFree(uint32_t addr, uint32_t flags);
 
 uint32_t VMM_CopyPageTable(uint32_t pagenum, uint32_t npages, uint32_t* buffer, uint32_t flags);
 

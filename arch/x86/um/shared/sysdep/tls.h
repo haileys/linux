@@ -3,7 +3,7 @@
 #define _SYSDEP_TLS_H
 
 #ifdef CONFIG_WIN9X
-#include <wsl9x.h>
+#include <wsl9x/task.h>
 #endif
 
 #ifdef __UM_HOST__
@@ -34,8 +34,8 @@ typedef struct user_desc user_desc_t;
 #endif /* __UM_HOST__ */
 
 #ifdef CONFIG_WIN9X
-extern int os_set_thread_area(user_desc_t *info, VMM_THREAD_HANDLE th);
-extern int os_get_thread_area(user_desc_t *info, VMM_THREAD_HANDLE th);
+extern int os_set_thread_area(user_desc_t *info, HTHREAD th);
+extern int os_get_thread_area(user_desc_t *info, HTHREAD th);
 #else
 extern int os_set_thread_area(user_desc_t *info, int pid);
 extern int os_get_thread_area(user_desc_t *info, int pid);

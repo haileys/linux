@@ -1,7 +1,8 @@
 #include <sysdep/archsetjmp.h>
 #include <sysdep/ptrace.h>
 
-unsigned long host_fp_size;
+// VMCPD handles fp reg state for us on win9x
+unsigned long host_fp_size = 0;
 
 unsigned long get_thread_reg(int reg, jmp_buf *buf)
 {

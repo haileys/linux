@@ -10,11 +10,11 @@ obj-y = \
 	process.o \
 	signal.o \
 	start_up.o \
-	string.o \
-	tls.o
+	string.o
 
 ifdef CONFIG_WSL9X_RUNTIME
 obj-y += runtime.o
+user-objs-y += runtime.o
 else
 obj-y += vxdwraps.o
 endif
@@ -27,10 +27,8 @@ win9x_user_cflags = \
 	-idirafter $(srctree)/$(ARCH_DIR)/include/generated \
 	-idirafter $(srctree)/$(HOST_DIR)/include/generated
 
-CFLAGS_main.o += -Wno-frame-larger-than $(win9x_user_cflags)
 CFLAGS_runtime.o += $(win9x_user_cflags)
-CFLAGS_os.o += $(win9x_user_cflags)
 
-USER_OBJS := $(user-objs-y) main.o runtime.o os.o
+USER_OBJS := $(user-objs-y)
 
 include $(srctree)/arch/um/scripts/Makefile.rules

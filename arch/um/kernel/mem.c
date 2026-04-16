@@ -67,7 +67,7 @@ u32 __init win9x_reserve_virtmem(u32 size)
 {
 	u32 npages = size >> PAGE_SHIFT;
 	u32 addr = VMM_PageReserve(PR_SYSTEM, npages, PR_FIXED | PR_4MEG);
-	if (addr == (u32)HMEM_FAIL) {
+	if (addr == PAGE_RESERVE_FAIL) {
 		panic("win9x_reserve_virtmem: VMM_PageReserve failed: npages=%d", npages);
 	}
 

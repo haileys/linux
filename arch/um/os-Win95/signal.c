@@ -6,13 +6,11 @@ static int signals_enabled = 0;
 void block_signals(void)
 {
 	signals_enabled = 0;
-	VMM_Begin_Critical_Section(0);
 }
 
 void unblock_signals(void)
 {
 	signals_enabled = 1;
-	VMM_End_Critical_Section();
 }
 
 int um_get_signals(void)

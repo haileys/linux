@@ -56,7 +56,7 @@ u32 __init win9x_allocate_physmem(void)
 {
 	u32 npages = physmem_size >> PAGE_SHIFT;
 	u32 addr = VMM_PageReserve(PR_SYSTEM, npages, PR_FIXED | PR_4MEG);
-	if (addr == (u32)HMEM_FAIL) {
+	if (addr == PAGE_RESERVE_FAIL) {
 		panic("win9x_allocate_physmem: VMM_PageReserve failed: npages=%d", npages);
 	}
 
