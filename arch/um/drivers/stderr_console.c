@@ -2,7 +2,6 @@
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/console.h>
-#include <os.h>
 
 #include "chan_user.h"
 
@@ -20,11 +19,7 @@ static int use_stderr_console = 0;
 static void stderr_console_write(struct console *console, const char *string,
 				 unsigned len)
 {
-#ifdef CONFIG_WIN9X
-	um_early_printk(string, len);
-#else
 	generic_write(2 /* stderr */, string, len, NULL);
-#endif
 }
 
 static struct console stderr_console = {
