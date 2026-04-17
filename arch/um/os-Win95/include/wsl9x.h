@@ -3,6 +3,7 @@
 #include <wsl9x/task.h>
 #include <wsl9x/mem.h>
 #include <wsl9x/time.h>
+#include <wsl9x/entry.h>
 
 void __noreturn unimplemented(void);
 

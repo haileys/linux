@@ -1,9 +1,9 @@
 #pragma once
+#include "prelude.h"
+#include "task.h"
 
 enum wsl9x_entry_reason {
-	// Initial start of kernel
 	WSL9X_START = 1,
-	// Resuming kernel
 	WSL9X_RESUME = 2,
 };
 
@@ -12,8 +12,10 @@ enum wsl9x_result {
 	WSL9X_YIELD = 1,
 	// Kernel is idle.
 	WSL9X_IDLE = 2,
+	// Returning to userspace
+	WSL9X_USER = 3,
 	// Kernel has panicked.
-	WSL9X_PANIC = 3,
+	WSL9X_PANIC = 4,
 };
 
 struct wsl9x_start_param {

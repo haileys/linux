@@ -148,6 +148,8 @@ void VMM_Restore_Client_State(const VMM_Client_Regs* regs);
 void VMM_Begin_Critical_Section(uint32_t flags);
 void VMM_End_Critical_Section(void);
 
+HTHREAD VMM_Get_Cur_Thread_Handle(void);
+
 // receives ref data in EDX:
 typedef void(*VMM_Thread_InitCallback)(void);
 
@@ -164,5 +166,7 @@ HTHREAD VMM_VMMCreateThread(
 );
 
 void VMM_VMMTerminateThread(HTHREAD thread);
+
+unsigned long VMM_AllocateThreadDataSlot(void);
 
 void VMM_Call_On_My_Stack(void(*callback)(uint32_t), uint32_t param, void* stack, size_t stack_size);

@@ -50,8 +50,6 @@ extern uint16_t wsl9x_user_data;
 
 #define D_PAGE32    (D_GRAN_PAGE+D_DEF32)   /* 32 bit Page granular */
 
-void wsl9x_allocate_descriptors(void);
-
 uint32_t VMM_SetDescriptor(uint16_t selector, VMM_VMCB* vm, uint32_t desc_hi, uint32_t desc_lo, uint32_t flags);
 uint64_t VMM_Allocate_LDT_Selector(VMM_VMCB* vm, uint32_t desc_hi, uint32_t desc_lo, uint32_t count, uint32_t flags);
 uint64_t VMM_Allocate_GDT_Selector(uint32_t desc_hi, uint32_t desc_lo, uint32_t flags);
