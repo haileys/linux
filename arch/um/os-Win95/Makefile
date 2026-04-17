@@ -6,6 +6,7 @@ HOST_DIR := arch/$(HEADER_ARCH)
 
 obj-y = \
 	boot_console.o \
+	console.o \
 	irq.o \
 	main.o \
 	os.o \
@@ -30,6 +31,8 @@ win9x_user_cflags = \
 	-idirafter $(srctree)/$(HOST_DIR)/include/generated
 
 CFLAGS_runtime.o += $(win9x_user_cflags)
+
+CFLAGS_console.o += -I $(srctree)/drivers/tty/hvc
 
 USER_OBJS := $(user-objs-y)
 

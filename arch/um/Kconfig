@@ -45,6 +45,9 @@ config UML
 
 config WIN9X
 	bool "Build UML for Win9x"
+	# hypervisor console support:
+	select HVC_DRIVER
+	select HVC_IRQ
 	# disable options for arch/um:
 	depends on !UML_TIME_TRAVEL_SUPPORT
 	# disable options from arch/um/drivers:
