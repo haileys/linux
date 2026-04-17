@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/* 
+/*
  * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
@@ -35,6 +35,10 @@ struct thread_struct {
 
 	/* Contains variable sized FP registers */
 	struct pt_regs regs;
+
+#ifdef CONFIG_WIN9X
+	struct uml_tls_struct tls_array[GDT_ENTRY_TLS_ENTRIES];
+#endif
 };
 
 #define INIT_THREAD \
@@ -66,7 +70,7 @@ extern unsigned long stacksizelim;
  */
 #define TASK_UNMAPPED_BASE	(0x40000000)
 
-extern void start_thread(struct pt_regs *regs, unsigned long entry, 
+extern void start_thread(struct pt_regs *regs, unsigned long entry,
 			 unsigned long stack);
 
 struct cpuinfo_um {

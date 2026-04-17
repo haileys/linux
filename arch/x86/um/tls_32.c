@@ -19,18 +19,63 @@
  *
  * These are initialized in an initcall and unchanged thereafter.
  */
-static int host_supports_tls = -1;
+static int host_supports_tls = 1;
+#ifndef CONFIG_WIN9X
 int host_gdt_entry_tls_min;
+#endif
+
+#ifdef CONFIG_WIN9X
+static unsigned int get_tls_entry_number(int index)
+{
+	if (index >= GDT_ENTRY_TLS_ENTRIES) {
+		return 0;
+	}
+
+	return tls_gdt_indexes[index];
+}
+
+static int validate_tls_entry_number(unsigned int entry_number)
+{
+	for (int i = 0; i < GDT_ENTRY_TLS_ENTRIES; i++) {
+		if (tls_gdt_indexes[i] == entry_number) {
+			return i;
+		}
+	}
+
+	return -EINVAL;
+}
+#else
+static int validate_tls_entry_number(unsigned int entry_number)
+{
+	if (entry_number < GDT_ENTRY_TLS_MIN || entry_number > GDT_ENTRY_TLS_MAX) {
+		return -EINVAL;
+	}
+
+	return entry_number - GDT_ENTRY_TLS_MIN;
+}
+
+static unsigned int get_tls_entry_number(int index)
+{
+	return index + GDT_ENTRY_TLS_MIN;
+}
+#endif
 
 static int do_set_thread_area(struct task_struct* task, struct user_desc *info)
 {
 	int ret;
 
+#ifdef CONFIG_WIN9X
+	ret = validate_tls_entry_number(info->entry_number);
+	if (ret < 0) {
+		return ret;
+	}
+
+	ret = os_set_thread_area(info);
+#else
 	if (info->entry_number < host_gdt_entry_tls_min ||
 	    info->entry_number >= host_gdt_entry_tls_min + GDT_ENTRY_TLS_ENTRIES)
 		return -EINVAL;
 
-#ifndef CONFIG_WIN9X
 	if (using_seccomp) {
 		int idx = info->entry_number - host_gdt_entry_tls_min;
 		struct stub_data *data = (void *)task->mm->context.id.stack;
@@ -42,9 +87,6 @@ static int do_set_thread_area(struct task_struct* task, struct user_desc *info)
 	}
 
 	ret = os_set_thread_area(info, task->mm->context.id.pid);
-#else
-	// TODO - win9x TLS support
-	ret = ENOTSUPP;
 #endif
 
 	if (ret)
@@ -69,7 +111,7 @@ static int get_free_idx(struct task_struct* task)
 
 	for (idx = 0; idx < GDT_ENTRY_TLS_ENTRIES; idx++)
 		if (!t->arch.tls_array[idx].present)
-			return idx + GDT_ENTRY_TLS_MIN;
+			return get_tls_entry_number(idx);
 	return -ESRCH;
 }
 
@@ -93,9 +135,9 @@ static int load_TLS(int flags, struct task_struct *to)
 	int ret = 0;
 	int idx;
 
-	for (idx = GDT_ENTRY_TLS_MIN; idx < GDT_ENTRY_TLS_MAX; idx++) {
+	for (idx = 0; idx < GDT_ENTRY_TLS_ENTRIES; idx++) {
 		struct uml_tls_struct* curr =
-			&to->thread.arch.tls_array[idx - GDT_ENTRY_TLS_MIN];
+			&to->thread.arch.tls_array[idx];
 
 		/*
 		 * Actually, now if it wasn't flushed it gets cleared and
@@ -104,7 +146,7 @@ static int load_TLS(int flags, struct task_struct *to)
 		if (!curr->present) {
 			if (!curr->flushed) {
 				clear_user_desc(&curr->tls);
-				curr->tls.entry_number = idx;
+				curr->tls.entry_number = get_tls_entry_number(idx);
 			} else {
 				WARN_ON(!LDT_empty(&curr->tls));
 				continue;
@@ -133,9 +175,9 @@ static inline int needs_TLS_update(struct task_struct *task)
 	int i;
 	int ret = 0;
 
-	for (i = GDT_ENTRY_TLS_MIN; i < GDT_ENTRY_TLS_MAX; i++) {
+	for (i = 0; i < GDT_ENTRY_TLS_ENTRIES; i++) {
 		struct uml_tls_struct* curr =
-			&task->thread.arch.tls_array[i - GDT_ENTRY_TLS_MIN];
+			&task->thread.arch.tls_array[i];
 
 		/*
 		 * Can't test curr->present, we may need to clear a descriptor
@@ -157,9 +199,9 @@ void clear_flushed_tls(struct task_struct *task)
 {
 	int i;
 
-	for (i = GDT_ENTRY_TLS_MIN; i < GDT_ENTRY_TLS_MAX; i++) {
+	for (i = 0; i < GDT_ENTRY_TLS_ENTRIES; i++) {
 		struct uml_tls_struct* curr =
-			&task->thread.arch.tls_array[i - GDT_ENTRY_TLS_MIN];
+			&task->thread.arch.tls_array[i];
 
 		/*
 		 * Still correct to do this, if it wasn't present on the host it
@@ -200,16 +242,18 @@ int arch_switch_tls(struct task_struct *to)
 }
 
 static int set_tls_entry(struct task_struct* task, struct user_desc *info,
-			 int idx, int flushed)
+			 int number, int flushed)
 {
 	struct thread_struct *t = &task->thread;
 
-	if (idx < GDT_ENTRY_TLS_MIN || idx > GDT_ENTRY_TLS_MAX)
-		return -EINVAL;
+	int idx = validate_tls_entry_number(number);
+	if (idx < 0) {
+		return idx;
+	}
 
-	t->arch.tls_array[idx - GDT_ENTRY_TLS_MIN].tls = *info;
-	t->arch.tls_array[idx - GDT_ENTRY_TLS_MIN].present = 1;
-	t->arch.tls_array[idx - GDT_ENTRY_TLS_MIN].flushed = flushed;
+	t->arch.tls_array[idx].tls = *info;
+	t->arch.tls_array[idx].present = 1;
+	t->arch.tls_array[idx].flushed = flushed;
 
 	return 0;
 }
@@ -217,7 +261,7 @@ static int set_tls_entry(struct task_struct* task, struct user_desc *info,
 int arch_set_tls(struct task_struct *new, unsigned long tls)
 {
 	struct user_desc info;
-	int idx, ret = -EFAULT;
+	int ret = -EFAULT;
 
 	if (copy_from_user(&info, (void __user *) tls, sizeof(info)))
 		goto out;
@@ -226,25 +270,25 @@ int arch_set_tls(struct task_struct *new, unsigned long tls)
 	if (LDT_empty(&info))
 		goto out;
 
-	idx = info.entry_number;
-
-	ret = set_tls_entry(new, &info, idx, 0);
+	ret = set_tls_entry(new, &info, info.entry_number, 0);
 out:
 	return ret;
 }
 
 static int get_tls_entry(struct task_struct *task, struct user_desc *info,
-			 int idx)
+			 int entry_number)
 {
 	struct thread_struct *t = &task->thread;
 
-	if (idx < GDT_ENTRY_TLS_MIN || idx > GDT_ENTRY_TLS_MAX)
-		return -EINVAL;
+	int idx = validate_tls_entry_number(entry_number);
+	if (idx < 0) {
+		return idx;
+	}
 
-	if (!t->arch.tls_array[idx - GDT_ENTRY_TLS_MIN].present)
+	if (!t->arch.tls_array[idx].present)
 		goto clear;
 
-	*info = t->arch.tls_array[idx - GDT_ENTRY_TLS_MIN].tls;
+	*info = t->arch.tls_array[idx].tls;
 
 out:
 	/*
@@ -252,7 +296,7 @@ out:
 	 * flushed. This could be triggered if load_TLS() failed.
 	 */
 	if (unlikely(task == current &&
-		     !t->arch.tls_array[idx - GDT_ENTRY_TLS_MIN].flushed)) {
+		     !t->arch.tls_array[idx].flushed)) {
 		printk(KERN_ERR "get_tls_entry: task with pid %d got here "
 				"without flushed TLS.", current->pid);
 	}
@@ -265,7 +309,7 @@ clear:
 	 * arch/i386/kernel/head.S:cpu_gdt_table). Emulate that.
 	 */
 	clear_user_desc(info);
-	info->entry_number = idx;
+	info->entry_number = get_tls_entry_number(idx);
 	goto out;
 }
 
@@ -361,17 +405,13 @@ out:
 	return ret;
 }
 
+#ifndef CONFIG_WIN9X
 /*
  * This code is really i386-only, but it detects and logs x86_64 GDT indexes
  * if a 32-bit UML is running on a 64-bit host.
  */
 static int __init __setup_host_supports_tls(void)
 {
-#ifdef CONFIG_WIN9X
-	printk(KERN_ERR "  Win9x TLS support NOT yet implemented! "
-			"TLS support inside UML will not work\n");
-	return 0;
-#else
 	check_host_supports_tls(&host_supports_tls, &host_gdt_entry_tls_min);
 	if (host_supports_tls) {
 		printk(KERN_INFO "Host TLS support detected\n");
@@ -391,7 +431,7 @@ static int __init __setup_host_supports_tls(void)
 		printk(KERN_ERR "  Host TLS support NOT detected! "
 				"TLS support inside UML will not work\n");
 	return 0;
-#endif
 }
 
 __initcall(__setup_host_supports_tls);
+#endif

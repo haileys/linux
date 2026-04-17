@@ -34,8 +34,8 @@ typedef struct user_desc user_desc_t;
 #endif /* __UM_HOST__ */
 
 #ifdef CONFIG_WIN9X
-extern int os_set_thread_area(user_desc_t *info, HTHREAD th);
-extern int os_get_thread_area(user_desc_t *info, HTHREAD th);
+extern int os_set_thread_area(user_desc_t *info);
+extern int os_get_thread_area(user_desc_t *info);
 #else
 extern int os_set_thread_area(user_desc_t *info, int pid);
 extern int os_get_thread_area(user_desc_t *info, int pid);

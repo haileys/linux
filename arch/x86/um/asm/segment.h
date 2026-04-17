@@ -2,10 +2,16 @@
 #ifndef __UM_SEGMENT_H
 #define __UM_SEGMENT_H
 
-extern int host_gdt_entry_tls_min;
+#include <linux/types.h>
 
 #define GDT_ENTRY_TLS_ENTRIES 3
+
+#ifdef CONFIG_WIN9X
+extern uint16_t tls_gdt_indexes[GDT_ENTRY_TLS_ENTRIES];
+#else
+extern int host_gdt_entry_tls_min;
 #define GDT_ENTRY_TLS_MIN host_gdt_entry_tls_min
 #define GDT_ENTRY_TLS_MAX (GDT_ENTRY_TLS_MIN + GDT_ENTRY_TLS_ENTRIES - 1)
+#endif
 
 #endif
