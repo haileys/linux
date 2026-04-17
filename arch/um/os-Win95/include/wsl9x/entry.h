@@ -8,6 +8,7 @@ enum wsl9x_entry_reason {
 	WSL9X_SYSCALL = 4,
 	WSL9X_PAGE_FAULT = 3,
 	WSL9X_TRAP = 5,
+	WSL9X_IRQ = 6,
 };
 
 enum wsl9x_result {
@@ -19,6 +20,10 @@ enum wsl9x_result {
 	WSL9X_USER = 3,
 	// Kernel has panicked.
 	WSL9X_PANIC = 4,
+};
+
+enum wsl9x_irq {
+	WSL9X_IRQ_CONSOLE,
 };
 
 struct wsl9x_start_param {
@@ -47,6 +52,7 @@ struct wsl9x_entry {
 		struct wsl9x_start_param start;
 		struct wsl9x_page_fault page_fault;
 		struct wsl9x_trap trap;
+		enum wsl9x_irq irq;
 	} as;
 };
 

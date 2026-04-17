@@ -6,6 +6,7 @@
 #include <wsl9x/descriptor.h>
 #include <wsl9x/entry.h>
 #include "process.h"
+#include "irq.h"
 
 static int started = 0;
 
@@ -52,6 +53,9 @@ void _start(struct wsl9x_entry* entry)
 		break;
 	case WSL9X_TRAP:
 		entry->result = wsl9x_trap(entry->as.trap.number);
+		break;
+	case WSL9X_IRQ:
+		entry->result = wsl9x_irq(entry->as.irq);
 		break;
 	}
 

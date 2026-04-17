@@ -249,7 +249,8 @@ void userspace(struct uml_pt_regs *regs)
 		// handle particular reason for returning from userspace
 		switch (reason) {
 		case WSL9X_START:
-			unreachable();
+		case WSL9X_IRQ:
+			panic("unreachable: reason=%d", reason);
 			break;
 		case WSL9X_RESUME:
 			// what do we do here?

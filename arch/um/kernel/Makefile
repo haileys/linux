@@ -21,7 +21,7 @@ obj-y = exec.o exitcode.o ksyms.o mem.o physmem.o \
 obj-y += load_file.o
 
 obj-os-Linux = config.o irq.o time.o
-obj-os-Win9x = irq_win9x.o time_win9x.o
+obj-os-Win9x = time_win9x.o
 
 ifeq ($(CONFIG_WIN9X),y)
 obj-y += $(obj-os-Win9x)
