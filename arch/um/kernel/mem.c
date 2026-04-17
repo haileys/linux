@@ -68,7 +68,17 @@ u32 __init win9x_reserve_virtmem(u32 size)
 	u32 npages = size >> PAGE_SHIFT;
 	u32 addr = VMM_PageReserve(PR_SYSTEM, npages, PR_FIXED | PR_4MEG);
 	if (addr == PAGE_RESERVE_FAIL) {
-		panic("win9x_reserve_virtmem: VMM_PageReserve failed: npages=%d", npages);
+		panic("VMM_PageReserve failed: PR_SYSTEM, npages=%d", npages);
+	}
+
+	u32 user_page_start = WIN9X_PRIVATE_ARENA_START >> PAGE_SHIFT;
+	u32 user_page_end = WIN9X_PRIVATE_ARENA_END >> PAGE_SHIFT;
+	u32 user_page_count = user_page_end - user_page_start;
+	u32 user_addr = VMM_PageReserve(user_page_start, user_page_count, PR_FIXED);
+	if (user_addr != WIN9X_PRIVATE_ARENA_START) {
+		panic("VMM_PageReserve failed for user range: start=%08x count=%08x",
+			user_page_start,
+			user_page_end);
 	}
 
 	return addr;

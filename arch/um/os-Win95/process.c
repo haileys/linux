@@ -1,22 +1,31 @@
 #include <as-layout.h>
 #include <asm/current.h>
+#include <asm/trapnr.h>
 #include <generated/asm-offsets.h>
 #include <kern_util.h>
+#include <linux/compiler.h>
 #include <linux/kmsg_dump.h>
 #include <linux/sched.h>
 #include <linux/sched/task.h>
 #include <linux/string.h>
 #include <linux/completion.h>
 #include <linux/panic.h>
+#include <linux/printk.h>
+#include <linux/mm_types.h>
 #include <os.h>
 #include <registers.h>
 #include <sysdep/tls.h>
 #include <sysdep/ptrace.h>
 #include <wsl9x.h>
+#include <wsl9x/mem.h>
+#include <wsl9x/sync.h>
 #include <wsl9x/task.h>
 #include <wsl9x/descriptor.h>
 #include <wsl9x/entry.h>
+#include <wsl9x/vmm.h>
 #include <uapi/linux/errno.h>
+#include <uapi/asm/processor-flags.h>
+#include "process.h"
 
 #define INIT_JMP_NEW_THREAD 0
 #define INIT_JMP_CALLBACK 1
@@ -24,21 +33,23 @@
 #define INIT_JMP_REBOOT 3
 #define INIT_JMP_RETURN 4
 
-static jmp_buf top_jmpbuf;
 static volatile int top_jmpbuf_ok = 0;
+static jmp_buf top_jmpbuf;
 
 static jmp_buf* resume_jmpbuf;
+
+const char* wsl9x_panic_msg;
 
 uint16_t wsl9x_user_code;
 uint16_t wsl9x_user_data;
 
-void __init wsl9x_allocate_descriptors(void)
+void __init wsl9x_init_process(void)
 {
-	// uint64_t code = VMM_BuildDescriptorDWORDs(0, 0xfffff, CODE_TYPE | D_DPL3, D_PAGE32);
-	// wsl9x_user_code = (uint16_t)VMM_Allocate_GDT_Selector(code >> 32, code, 0);
+	uint64_t code = VMM_BuildDescriptorDWORDs(0, 0xfffff, CODE_TYPE | D_DPL3, D_PAGE32);
+	wsl9x_user_code = (uint16_t)VMM_Allocate_GDT_Selector(code >> 32, code, 0);
 
-	// uint64_t data = VMM_BuildDescriptorDWORDs(0, 0xfffff, RW_DATA_TYPE | D_DPL3, D_PAGE32);
-	// wsl9x_user_data = (uint16_t)VMM_Allocate_GDT_Selector(data >> 32, data, 0);
+	uint64_t data = VMM_BuildDescriptorDWORDs(0, 0xfffff, RW_DATA_TYPE | D_DPL3, D_PAGE32);
+	wsl9x_user_data = (uint16_t)VMM_Allocate_GDT_Selector(data >> 32, data, 0);
 }
 
 int start_idle_thread(void *stack, jmp_buf *switch_buf)
@@ -55,13 +66,6 @@ int start_idle_thread(void *stack, jmp_buf *switch_buf)
 	}
 
 	return n;
-	// (*switch_buf)[0].JB_IP = (unsigned long) uml_finishsetup;
-	// (*switch_buf)[0].JB_SP = (unsigned long) stack +
-	// 	UM_THREAD_SIZE - sizeof(void *);
-
-	// initial_jmpbuf_ok = 1;
-	// switch_threads(&initial_jmpbuf, switch_buf);
-	// return 0;
 }
 
 static jmp_buf* take_top_jmpbuf(void)
@@ -73,17 +77,21 @@ static jmp_buf* take_top_jmpbuf(void)
 	return &top_jmpbuf;
 }
 
-static void wsl9x_yield(jmp_buf *me, enum wsl9x_result result)
+static enum wsl9x_entry_reason wsl9x_yield(jmp_buf *me, enum wsl9x_result result)
 {
-	if (UML_SETJMP(me) == 0) {
+	int n = UML_SETJMP(me);
+
+	if (n == 0) {
 		resume_jmpbuf = me;
 
 		jmp_buf *top = take_top_jmpbuf();
 		UML_LONGJMP(top, result);
 	}
+
+	return n;
 }
 
-enum wsl9x_result wsl9x_resume(void)
+static enum wsl9x_result do_resume(enum wsl9x_entry_reason reason)
 {
 	top_jmpbuf_ok = 1;
 	int n = UML_SETJMP(&top_jmpbuf);
@@ -94,14 +102,42 @@ enum wsl9x_result wsl9x_resume(void)
 			panic("resume_jmpbuf not ok");
 		}
 
-		UML_LONGJMP(resume, 1);
+		UML_LONGJMP(resume, reason);
 	}
 
 	return n;
 }
 
-void os_dump_core(void)
+enum wsl9x_result wsl9x_resume(void)
 {
+	return do_resume(WSL9X_RESUME);
+}
+
+enum wsl9x_result wsl9x_page_fault(u32 fault_addr)
+{
+	struct uml_pt_regs* regs = &current->thread.regs.regs;
+	regs->faultinfo.cr2 = fault_addr;
+	regs->faultinfo.trap_no = X86_TRAP_PF;
+	regs->faultinfo.error_code = VMM_Get_Cur_Thread_Handle()->ClientPtr->Error;
+	return do_resume(WSL9X_PAGE_FAULT);
+}
+
+enum wsl9x_result wsl9x_syscall(void)
+{
+	struct uml_pt_regs* regs = &current->thread.regs.regs;
+	PT_SYSCALL_NR(regs->gp) = VMM_Get_Cur_Thread_Handle()->ClientPtr->EAX;
+	return do_resume(WSL9X_SYSCALL);
+}
+
+enum wsl9x_result wsl9x_trap(u8 number)
+{
+	panic("wsl9x_trap: don't know how to handle trap %d", number);
+}
+
+void __noreturn wsl9x_panic(const char* msg)
+{
+	wsl9x_panic_msg = msg;
+
 	if (xchg(&top_jmpbuf_ok, 0)) {
 		longjmp(top_jmpbuf, WSL9X_PANIC);
 	}
@@ -117,20 +153,6 @@ void win9x_dump_log(void)
 	kmsg_dump(KMSG_DUMP_UNDEF);
 }
 
-/*
-void wsl9x_resume(void)
-{
-	unimplemented();
-	schedule();
-	interrupt_end();
-	current_mm_sync();
-	struct task_struct* cur = current;
-
-	top_jmpbuf_ok = 1;
-	switch_threads(&top_jmpbuf, &cur->thread.switch_buf);
-}
-*/
-
 void os_idle_prepare(void)
 {
 }
@@ -139,63 +161,98 @@ void os_idle_sleep(void) {
 	wsl9x_yield(&current->thread.switch_buf, WSL9X_IDLE);
 }
 
-struct thread_init_data {
-	// struct task_struct* task;
-	struct completion* done;
-};
-
-static __used void thread_init(struct thread_init_data* data)
+static void set_vmm_regs(VMM_Client_Regs* out, const struct uml_pt_regs *regs)
 {
-	panic("thread_init");
-	complete(data->done);
+	out->EIP = UPT_IP(regs);
+	out->ESP = UPT_SP(regs);
+	out->EFlags = UPT_EFLAGS(regs);
+	out->EAX = UPT_AX(regs);
+	out->EBX = UPT_BX(regs);
+	out->ECX = UPT_CX(regs);
+	out->EDX = UPT_DX(regs);
+	out->ESI = UPT_SI(regs);
+	out->EDI = UPT_DI(regs);
+	out->EBP = UPT_BP(regs);
+	out->CS = UPT_CS(regs);
+	out->SS = UPT_SS(regs);
+	out->DS = UPT_DS(regs);
+	out->ES = UPT_ES(regs);
+
+	// TODO - FS and GS for TLS
 }
 
-static __naked void thread_init_trampoline(void)
+static void fetch_vmm_regs(struct uml_pt_regs *out, const VMM_Client_Regs* regs)
 {
-	__asm__ volatile (
-		"pushl %edx\n"
-		"call thread_init\n"
-		"addl 4, %esp\n"
-		"ret\n"
-		// :: "s"(thread_init)
-	);
+	UPT_IP(out) = regs->EIP;
+	UPT_SP(out) = regs->ESP;
+	UPT_EFLAGS(out) = regs->EFlags;
+	UPT_AX(out) = regs->EAX;
+	UPT_BX(out) = regs->EBX;
+	UPT_CX(out) = regs->ECX;
+	UPT_DX(out) = regs->EDX;
+	UPT_SI(out) = regs->ESI;
+	UPT_DI(out) = regs->EDI;
+	UPT_BP(out) = regs->EBP;
+	UPT_CS(out) = regs->CS;
+	UPT_SS(out) = regs->SS;
+	UPT_DS(out) = regs->DS;
+	UPT_ES(out) = regs->ES;
+
+	// TODO - FS and GS for TLS
 }
 
-static int wsl9x_thread_type[0];
-
-static HTHREAD start_userspace_thread(struct uml_pt_regs *regs)
+void userspace(struct uml_pt_regs *regs)
 {
-	DECLARE_COMPLETION_ONSTACK(completion);
+	HTHREAD thread = VMM_Get_Cur_Thread_Handle();
 
-	// // assert this to make myself feel better. why is regs passed in here anyway?
-	// if (&current->thread.regs.regs == regs) {
-	// 	panic("called with regs of not-current task");
-	// }
+	// Handle any immediate reschedules or signals
+	interrupt_end();
 
-	struct thread_init_data init_data = {0};
-	init_data.done = &completion;
-	// init_data.task = current;
+	while (1) {
+		// sync memory context
+		current_mm_sync();
 
-	// HTHREAD thread = VMM_VMMCreateThread(
-	// 	UPT_SS(regs),
-	// 	UPT_SP(regs),
-	// 	UPT_CS(regs),
-	// 	UPT_IP(regs),
-	// 	UPT_DS(regs),
-	// 	UPT_ES(regs),
-	// 	(u32)&wsl9x_thread_type,
-	// 	thread_init_trampoline,
-	// 	&init_data);
+		// restore regs
+		set_vmm_regs(thread->ClientPtr, regs);
 
-	wait_for_completion(init_data.done);
+		// TODO - call VMCPD to restore floating point regs
 
-	return 0;
-}
+		if (singlestepping()) {
+			thread->ClientPtr->EFlags |= X86_EFLAGS_TF;
+		} else {
+			thread->ClientPtr->EFlags &= ~X86_EFLAGS_TF;
+		}
 
-void userspace(struct uml_pt_regs *init_regs)
-{
-	start_userspace_thread(init_regs);
-	unimplemented();
+		// return to userspace
+		enum wsl9x_entry_reason reason = wsl9x_yield(&current->thread.switch_buf, WSL9X_USER);
+
+		// save regs
+		fetch_vmm_regs(regs, thread->ClientPtr);
+		regs->is_user = 1;
+
+		// handle particular reason for returning from userspace
+		switch (reason) {
+		case WSL9X_START:
+			unreachable();
+			break;
+		case WSL9X_RESUME:
+			// what do we do here?
+			panic("WSL9X_RESUME after wsl9x_yield");
+			break;
+		case WSL9X_PAGE_FAULT:
+			segv(regs->faultinfo, 0, 1, NULL, NULL);
+			break;
+		case WSL9X_SYSCALL:
+			handle_syscall(regs);
+			break;
+		case WSL9X_TRAP:
+			panic("resuming from WSL9X_TRAP unimplemented");
+			break;
+		}
+
+		// go around again
+		interrupt_end();
+	}
 }
 
 void new_thread(void *stack, jmp_buf *buf, void (*handler)(void))

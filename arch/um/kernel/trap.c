@@ -236,7 +236,6 @@ out_of_memory:
 	return 0;
 }
 
-#ifndef CONFIG_WIN9X
 static void show_segv_info(struct uml_pt_regs *regs)
 {
 	struct task_struct *tsk = current;
@@ -258,6 +257,7 @@ static void show_segv_info(struct uml_pt_regs *regs)
 	printk(KERN_CONT "\n");
 }
 
+#ifndef CONFIG_WIN9X
 static void bad_segv(struct faultinfo fi, unsigned long ip)
 {
 	current->thread.arch.faultinfo = fi;
@@ -299,6 +299,7 @@ void segv_handler(int sig, struct siginfo *unused_si, struct uml_pt_regs *regs,
 	}
 	segv(*fi, UPT_IP(regs), UPT_IS_USER(regs), regs, mc);
 }
+#endif
 
 /*
  * We give a *copy* of the faultinfo in the regs to segv.
@@ -339,8 +340,14 @@ unsigned long segv(struct faultinfo fi, unsigned long ip, int is_user,
 			show_regs(container_of(regs, struct pt_regs, regs));
 			panic("Segfault without recovery target");
 		}
+#ifdef CONFIG_WIN9X
+		// I'm not convinced this code is reachable. It doesn't appear
+		// that anything ever sets segv_continue...
+		panic("unreachable mc_set_rip called in segv");
+#else
 		mc_set_rip(mc, current->thread.segv_continue);
 		current->thread.segv_continue = NULL;
+#endif
 		goto out;
 	}
 	else if (current->mm == NULL) {
@@ -395,6 +402,7 @@ out:
 	return 0;
 }
 
+#ifndef CONFIG_WIN9X
 void relay_signal(int sig, struct siginfo *si, struct uml_pt_regs *regs,
 		  void *mc)
 {

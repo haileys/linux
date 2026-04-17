@@ -76,12 +76,14 @@ static void page_commit_phys(uint32_t pagenum, uint32_t uml_physnum, uint32_t fl
 {
 	uint32_t physnum = underlying_phys(uml_physnum);
 
-	if (flags & ~(PC_INCR | PC_USER | PC_WRITEABLE | PC_LOCKED)) {
-		panic("wrong flags to VMM_PageCommitPhys - will always fail");
+	u32 invalid_flags = flags & ~(PC_INCR | PC_USER | PC_WRITEABLE | PC_LOCKED);
+	if (invalid_flags) {
+		panic("invalid flags in VMM_PageCommitPhys: %08x", invalid_flags);
 	}
 
 	if (!VMM_PageCommitPhys(pagenum, 1, physnum, flags)) {
-		panic("VMM_PageCommitPhys failed");
+		panic("VMM_PageCommitPhys failed: pagenum=%08x physnum=%08x flags=%08x",
+			pagenum, physnum, flags);
 	}
 }
 

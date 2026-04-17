@@ -31,6 +31,11 @@
 
 #include <sysdep/ptrace.h>
 
+#ifdef CONFIG_WIN9X
+#define WIN9X_PRIVATE_ARENA_START 0x00400000
+#define WIN9X_PRIVATE_ARENA_END   0x80000000
+#endif
+
 struct task_struct;
 extern struct task_struct *cpu_tasks[];
 

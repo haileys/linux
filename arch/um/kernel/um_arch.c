@@ -232,6 +232,18 @@ static void __init uml_postsetup(void)
 	return;
 }
 
+#ifdef CONFIG_WIN9X
+static int panic_exit(struct notifier_block *self, unsigned long val, void *ptr)
+{
+	kmsg_dump(KMSG_DUMP_PANIC);
+	bust_spinlocks(1);
+	bust_spinlocks(0);
+	uml_exitcode = 1;
+
+	const char* msg = ptr;
+	wsl9x_panic(msg);
+}
+#else
 static int panic_exit(struct notifier_block *self, unsigned long unused1,
 		      void *unused2)
 {
@@ -243,6 +255,7 @@ static int panic_exit(struct notifier_block *self, unsigned long unused1,
 
 	return NOTIFY_DONE;
 }
+#endif
 
 static struct notifier_block panic_exit_notifier = {
 	.notifier_call	= panic_exit,
@@ -336,7 +349,7 @@ int __init linux_main(int argc, char **argv, char **envp)
 		add_arg(DEFAULT_COMMAND_LINE_CONSOLE);
 
 #ifdef CONFIG_WIN9X
-	task_size = 0x80000000; // start of Win9x shared arena
+	task_size = WIN9X_PRIVATE_ARENA_END; // start of Win9x shared arena
 #else
 	host_task_size = get_top_address(envp);
 	/* reserve a few pages for the stubs */

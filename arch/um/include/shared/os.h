@@ -206,6 +206,7 @@ extern void report_enomem(void);
 
 /* process.c */
 #ifdef CONFIG_WIN9X
+void __noreturn wsl9x_panic(const char* msg);
 #else
 pid_t os_reap_child(void);
 extern void os_alarm_process(int pid);
@@ -274,7 +275,9 @@ extern int raw(int fd);
 extern void setup_machinename(char *machine_out);
 extern void setup_hostinfo(char *buf, int len);
 extern ssize_t os_getrandom(void *buf, size_t len, unsigned int flags);
+#ifndef CONFIG_WIN9X
 extern void os_dump_core(void) __attribute__ ((noreturn));
+#endif
 extern void um_early_printk(const char *s, unsigned int n);
 extern void os_fix_helper_signals(void);
 extern void os_info(const char *fmt, ...)
