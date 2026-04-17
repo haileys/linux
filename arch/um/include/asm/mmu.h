@@ -22,8 +22,6 @@ typedef struct mm_context {
 
 	struct list_head list;
 #endif
-	HCONTEXT handle;
-
 	/* Address range in need of a TLB sync */
 	spinlock_t sync_tlb_lock;
 	unsigned long sync_tlb_range_from;

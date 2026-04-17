@@ -5,18 +5,9 @@
 
 int init_new_context(struct task_struct *task, struct mm_struct *mm)
 {
-	// HCONTEXT handle = VMM_ContextCreate();
-	// if (!handle) {
-	// 	panic("VMM_ContextCreate failed");
-	// 	return -ENOMEM;
-	// }
-
-	// mm->context.handle = handle;
-	mm->context.handle = 0;
 	return 0;
 }
 
 void destroy_context(struct mm_struct *mm)
 {
-	unimplemented();
 }
