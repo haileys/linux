@@ -7,12 +7,14 @@
 #include <wsl9x/entry.h>
 #include "process.h"
 #include "irq.h"
+#include "internal.h"
+
+const struct wsl9x_services* wsl9x_services;
 
 static int started = 0;
 
 const char * const elf_aux_platform = "i386";
 uint32_t elf_aux_hwcap = 0;
-
 
 static void init_hwcap(void)
 {
@@ -30,6 +32,8 @@ static enum wsl9x_result wsl9x_start(struct wsl9x_start_param* start)
 	if (xchg(&started, 1)) {
 		panic("wsl9x already started");
 	}
+
+	wsl9x_services = start->services;
 
 	init_hwcap();
 	wsl9x_init_process();

@@ -5,9 +5,7 @@ ARCH_DIR := arch/um
 HOST_DIR := arch/$(HEADER_ARCH)
 
 obj-y = \
-	boot_console.o \
 	console.o \
-	dos_tty.o \
 	irq.o \
 	main.o \
 	os.o \
@@ -16,6 +14,9 @@ obj-y = \
 	start_up.o \
 	string.o \
 	vxdwraps.o
+
+# obj-y += boot_console.o
+# obj-y += dos_tty.o
 
 CFLAGS_console.o += -I $(srctree)/drivers/tty/hvc
 

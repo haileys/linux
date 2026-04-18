@@ -26,7 +26,13 @@ enum wsl9x_irq {
 	WSL9X_IRQ_CONSOLE,
 };
 
+struct wsl9x_services {
+	ssize_t(*console_put)(u32 vtermno, const u8* buf, size_t len);
+	ssize_t(*console_get)(u32 vtermno, u8* buf, size_t len);
+};
+
 struct wsl9x_start_param {
+	const struct wsl9x_services* services;
 	int argc;
 	char** argv;
 	char** envp;

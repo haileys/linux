@@ -7,17 +7,18 @@
 #include <linux/irq.h>
 #include <hvc_console.h>
 #include <wsl9x/entry.h>
+#include "internal.h"
 
 static struct hvc_struct *wsl9x_console_dev;
 
 static ssize_t wsl9x_console_put(uint32_t vtermno, const u8 *buf, size_t count)
 {
-	return count;
+	return wsl9x_services->console_put(vtermno, buf, count);
 }
 
 static ssize_t wsl9x_console_get(uint32_t vtermno, u8 *buf, size_t count)
 {
-	return 0;
+	return wsl9x_services->console_get(vtermno, buf, count);
 }
 
 static const struct hv_ops wsl9x_console_ops = {
@@ -30,8 +31,6 @@ static const struct hv_ops wsl9x_console_ops = {
 
 static int __init wsl9x_console_init(void)
 {
-	__asm__ volatile("xchgw %bx, %bx");
-
 	wsl9x_console_dev = hvc_alloc(0, WSL9X_IRQ_CONSOLE, &wsl9x_console_ops, 16);
 	BUG_ON(!wsl9x_console_dev);
 
