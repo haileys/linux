@@ -1,6 +1,28 @@
 #pragma once
 #include "prelude.h"
 
+struct VMM_VMCB;
+
+typedef enum {
+	IPF_PGDIR   = 0x00000001,  /* Page directory entry not-present */
+	IPF_V86PG   = 0x00000002,  /* Unexpected not present Page in V86 */
+	IPF_V86PGH  = 0x00000004,  /* Like IPF_V86PG at high linear */
+	IPF_INVTYP  = 0x00000008,  /* page has invalid not present type */
+	IPF_PGERR   = 0x00000010,  /* pageswap device failure */
+	IPF_REFLT   = 0x00000020,  /* re-entrant page fault */
+	IPF_VMM     = 0x00000040,  /* Page fault caused by a VxD */
+	IPF_PM      = 0x00000080,  /* Page fault by VM in Prot Mode */
+	IPF_V86     = 0x00000100,  /* Page fault by VM in V86 Mode */
+} VMM_IPF_Flags;
+
+typedef struct {
+	ulong            linear_addr;
+	ulong            map_page_num;
+	ulong            pte_entry;
+	struct VMM_VMCB* faulting_vm;
+	VMM_IPF_Flags    flags;
+} VMM_IPF_Data;
+
 #define PAGE_RESERVE_FAIL ((uint32_t)(-1))
 
 uint32_t VMM_PageReserve(uint32_t virt_pfn, uint32_t npages, uint32_t flags);

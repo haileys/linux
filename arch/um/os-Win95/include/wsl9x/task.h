@@ -1,7 +1,7 @@
 #pragma once
 #include "prelude.h"
 
-typedef struct {
+typedef struct VMM_Client_Regs {
 	uint32_t EDI;           // Client's EDI
 	uint32_t ESI;           // Client's ESI
 	uint32_t EBP;           // Client's EBP
@@ -43,14 +43,15 @@ typedef struct {
 	uint16_t res12;
 } VMM_Client_Regs;
 
-
-typedef struct {
+typedef struct VMM_VMCB {
     uint32_t VM_Status;         // VM status flags
     uint32_t High_Linear;       // Address of VM mapped high
     VMM_Client_Regs* Client_Pointer;
     uint32_t VMID;
     uint32_t Signature;
 } VMM_VMCB;
+
+typedef struct VMM_VMCB* HVM;
 
 #define VMSTAT_EXCLUSIVE_BIT    0x00    /* VM is exclusive mode */
 #define VMSTAT_EXCLUSIVE        (1L << VMSTAT_EXCLUSIVE_BIT)
@@ -96,7 +97,7 @@ typedef struct {
 #define VMSTAT_USE32_MASK   (VMSTAT_PM_USE32 | VMSTAT_VXD_EXEC)
 
 
-typedef struct {
+typedef struct VMM_TCB {
 	uint32_t Flags;             // 0x00  Thread status flags
 	uint32_t Reserved1;         // 0x04  Used internally by VMM
 	uint32_t Reserved2;         // 0x08  Used internally by VMM
@@ -149,6 +150,7 @@ void VMM_Begin_Critical_Section(uint32_t flags);
 void VMM_End_Critical_Section(void);
 
 HTHREAD VMM_Get_Cur_Thread_Handle(void);
+HTHREAD VMM_Get_Sys_Thread_Handle(void);
 
 // receives ref data in EDX:
 typedef void(*VMM_Thread_InitCallback)(void);

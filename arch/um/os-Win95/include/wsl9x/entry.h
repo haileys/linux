@@ -23,7 +23,7 @@ enum wsl9x_result {
 };
 
 enum wsl9x_irq {
-	WSL9X_IRQ_CONSOLE,
+	WSL9X_IRQ_CONSOLE = 1,
 };
 
 struct wsl9x_services {
