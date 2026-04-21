@@ -4,5 +4,11 @@
 dir /dev 0755 0 0
 nod /dev/console 0600 0 0 c 5 1
 dir /root 0700 0 0
+
 dir /bin 0755 0 0
-file /bin/busybox busybox-1.36.1/busybox 0755 0 0 /bin/sh /bin/init /bin/uname /bin/w /bin/ls
+file /bin/busybox busybox-1.36.1/busybox 0755 0 0 /bin/sh /bin/init /bin/uname /bin/w /bin/ls /bin/hostname
+file /bin/fastfetch ../fastfetch/build/fastfetch.stripped 0755 0 0
+
+dir /etc 0755 0 0
+file /etc/passwd rootfs/etc/passwd 0644 0 0
+file /etc/hostname rootfs/etc/hostname 0644 0 0
