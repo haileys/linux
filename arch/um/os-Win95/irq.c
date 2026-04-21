@@ -24,14 +24,14 @@ static struct irq_chip normal_irq_type = {
 
 void __init init_IRQ(void)
 {
-	for (int i = 0; i < NR_IRQS; i++) {
+	for (int i = 0; i < WSL9X_NR_IRQS; i++) {
 		irq_set_chip_and_handler(i, &normal_irq_type, handle_edge_irq);
 	}
 }
 
 int __init arch_probe_nr_irqs(void)
 {
-	return NR_IRQS;
+	return WSL9X_NR_IRQS;
 }
 
 enum wsl9x_result wsl9x_irq(int irq)

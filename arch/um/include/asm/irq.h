@@ -2,6 +2,13 @@
 #ifndef __UM_IRQ_H
 #define __UM_IRQ_H
 
+#ifdef CONFIG_WIN9X
+
+#include <wsl9x/entry.h>
+#define NR_IRQS WSL9X_NR_IRQS
+
+#else
+
 #define TIMER_IRQ		0
 #define UMN_IRQ			1
 #define UBD_IRQ			2
@@ -37,4 +44,7 @@
 #endif /* CONFIG_PCI_MSI */
 
 #include <asm-generic/irq.h>
+
+#endif
+
 #endif
