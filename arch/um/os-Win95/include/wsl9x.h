@@ -19,8 +19,17 @@ static inline struct u32divrem udiv64(uint64_t num, uint32_t denom)
 	return out;
 }
 
-void WSL9x_Printks(const char* str);
-void WSL9x_Printk(const char* str, size_t len);
-void WSL9x_Log_Info(const char* str, size_t len);
-void WSL9x_Log_Warn(const char* str, size_t len);
+#define WSL9X__GET_VERSION 0x0000
+u32 WSL9X_Get_Version(void);
 
+#define WSL9X__DEBUG_PRINT 0x0001
+void WSL9X_Debug_Print(const char* str, size_t len);
+
+#define WSL9X__DEBUG_PRINTF 0x0002
+void WSL9X_Debug_Printf(const char* str, ...);
+
+#define WSL9X__LOG_INFO 0x0003
+void WSL9X_Log_Info(const char* str, size_t len);
+
+#define WSL9X__LOG_WARN 0x0004
+void WSL9X_Log_Warn(const char* str, size_t len);

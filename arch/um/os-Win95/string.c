@@ -97,8 +97,3 @@ char *strstr(const char *haystack, const char *needle)
 
 	return NULL;
 }
-
-void WSL9x_Printks(const char* str)
-{
-	WSL9x_Printk(str, strlen(str));
-}

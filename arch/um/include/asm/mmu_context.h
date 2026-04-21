@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/* 
+/*
  * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
@@ -13,10 +13,14 @@
 #include <asm/mm_hooks.h>
 #include <asm/mmu.h>
 
-static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next, 
+#ifdef CONFIG_WIN9X
+void switch_mm(struct mm_struct *prev, struct mm_struct *next, struct task_struct *tsk);
+#else
+static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next,
 			     struct task_struct *tsk)
 {
 }
+#endif
 
 #define init_new_context init_new_context
 extern int init_new_context(struct task_struct *task, struct mm_struct *mm);

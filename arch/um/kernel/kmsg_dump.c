@@ -48,13 +48,13 @@ static void kmsg_dumper_stdout(struct kmsg_dumper *dumper,
 	kmsg_dump_rewind(&iter);
 
 #ifdef CONFIG_WIN9X
-	WSL9x_Printks("kmsg_dump:\n");
+	WSL9X_Debug_Printf("kmsg_dump:\n");
 #else
 	printf("kmsg_dump:\n");
 #endif
 	while (kmsg_dump_get_line(&iter, true, line, sizeof(line), &len)) {
 #ifdef CONFIG_WIN9X
-		WSL9x_Printk(line, len);
+		WSL9X_Debug_Print(line, len);
 #else
 		line[len] = '\0';
 		printf("%s", line);

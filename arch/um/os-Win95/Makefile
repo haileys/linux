@@ -8,6 +8,7 @@ obj-y = \
 	console.o \
 	irq.o \
 	main.o \
+	mmu.o \
 	os.o \
 	process.o \
 	signal.o \

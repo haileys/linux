@@ -1,10 +1,16 @@
 #include <as-layout.h>
-#include <linux/types.h>
-#include <linux/panic.h>
 #include <linux/atomic.h>
+#include <linux/mm_types.h>
+#include <linux/panic.h>
+#include <linux/types.h>
+
 #include <wsl9x.h>
 #include <wsl9x/descriptor.h>
 #include <wsl9x/entry.h>
+#include <wsl9x/mem.h>
+#include <wsl9x/task.h>
+#include <wsl9x/vmm.h>
+
 #include "process.h"
 #include "irq.h"
 #include "internal.h"
@@ -36,7 +42,9 @@ static enum wsl9x_result wsl9x_start(struct wsl9x_start_param* start)
 	wsl9x_services = start->services;
 
 	init_hwcap();
-	wsl9x_init_process();
+	wsl9x_init_gdt();
+	wsl9x_init_mmu();
+
 	return linux_main(start->argc, start->argv, start->envp);
 }
 

@@ -28,6 +28,8 @@
 #include <uapi/linux/errno.h>
 #include <uapi/asm/processor-flags.h>
 #include <uapi/asm/ldt.h>
+
+#include "internal.h"
 #include "process.h"
 
 #define INIT_JMP_NEW_THREAD 0
@@ -48,7 +50,7 @@ uint16_t wsl9x_user_data;
 
 uint16_t tls_gdt_indexes[GDT_ENTRY_TLS_ENTRIES];
 
-void __init wsl9x_init_process(void)
+void __init wsl9x_init_gdt(void)
 {
 	uint64_t code = VMM_BuildDescriptorDWORDs(0, 0xfffff, CODE_TYPE | D_DPL3, D_PAGE32);
 	wsl9x_user_code = (uint16_t)VMM_Allocate_GDT_Selector(code >> 32, code, 0);

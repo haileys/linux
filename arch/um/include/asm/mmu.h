@@ -16,7 +16,9 @@
 #endif
 
 typedef struct mm_context {
-#ifndef CONFIG_WIN9X
+#ifdef CONFIG_WIN9X
+	HCONTEXT handle;
+#else
 	struct mm_id id;
 	struct mutex turnstile;
 

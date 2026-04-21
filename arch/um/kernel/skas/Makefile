@@ -5,13 +5,8 @@
 
 obj-y := process.o syscall.o uaccess.o
 
-obj-os-Linux := mmu.o stub.o stub_exe_embed.o
-obj-os-Win95 := mmu_win9x.o
-
-ifeq ($(CONFIG_WIN9X),y)
-obj-y += $(obj-os-Win95)
-else
-obj-y += $(obj-os-Linux)
+ifneq ($(CONFIG_WIN9X),y)
+obj-y += mmu.o stub.o stub_exe_embed.o
 endif
 
 # Stub executable

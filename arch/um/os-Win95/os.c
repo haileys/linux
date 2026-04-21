@@ -123,7 +123,7 @@ void os_info(const char *fmt, ...)
 
 	va_start(list, fmt);
 	len = vscnprintf(buf, sizeof(buf), fmt, list);
-	WSL9x_Log_Info(buf, len);
+	WSL9X_Log_Info(buf, len);
 	va_end(list);
 }
 
@@ -135,11 +135,11 @@ void os_warn(const char *fmt, ...)
 
 	va_start(list, fmt);
 	len = vscnprintf(buf, sizeof(buf), fmt, list);
-	WSL9x_Log_Warn(buf, len);
+	WSL9X_Log_Warn(buf, len);
 	va_end(list);
 }
 
 void um_early_printk(const char *s, unsigned int n)
 {
-	WSL9x_Printk(s, n);
+	WSL9X_Debug_Print(s, n);
 }

@@ -172,3 +172,5 @@ void VMM_VMMTerminateThread(HTHREAD thread);
 unsigned long VMM_AllocateThreadDataSlot(void);
 
 void VMM_Call_On_My_Stack(void(*callback)(uint32_t), uint32_t param, void* stack, size_t stack_size);
+
+bool VMM_Call_When_Thread_Switched(void* callback);
