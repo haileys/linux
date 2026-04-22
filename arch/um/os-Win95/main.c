@@ -31,8 +31,6 @@ static enum wsl9x_result wsl9x_start(struct wsl9x_start_param* start)
 		panic("wsl9x already started");
 	}
 
-	wsl9x_services = start->services;
-
 	wsl9x_init_cpu();
 	wsl9x_init_gdt();
 	wsl9x_init_mmu();

@@ -35,6 +35,12 @@ __naked void WSL9X_Log_Info(const char* str, size_t len)
 __naked void WSL9X_Log_Warn(const char* str, size_t len)
 	DEF_WSL9X_JUMP(WSL9X__LOG_WARN)
 
+__naked ssize_t WSL9X_Console_Put(u32 vtermno, const u8* buf, size_t len)
+	DEF_WSL9X_JUMP(WSL9X__CONSOLE_PUT)
+
+__naked ssize_t WSL9X_Console_Get(u32 vtermno, u8* buf, size_t len)
+	DEF_WSL9X_JUMP(WSL9X__CONSOLE_GET)
+
 __naked u32 VMM_SetDescriptor(uint16_t selector, VMM_VMCB* vm, uint32_t desc_hi, uint32_t desc_lo, uint32_t flags)
 	DEF_VMM_JUMP(0x007c)
 

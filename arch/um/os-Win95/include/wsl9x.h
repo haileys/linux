@@ -33,3 +33,9 @@ void WSL9X_Log_Info(const char* str, size_t len);
 
 #define WSL9X__LOG_WARN 0x0004
 void WSL9X_Log_Warn(const char* str, size_t len);
+
+#define WSL9X__CONSOLE_PUT 0x0005
+ssize_t WSL9X_Console_Put(u32 vtermno, const u8* buf, size_t len);
+
+#define WSL9X__CONSOLE_GET 0x0006
+ssize_t WSL9X_Console_Get(u32 vtermno, u8* buf, size_t len);
