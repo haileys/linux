@@ -19,14 +19,6 @@ const struct wsl9x_services* wsl9x_services;
 
 static int started = 0;
 
-const char * const elf_aux_platform = "i386";
-uint32_t elf_aux_hwcap = 0;
-
-static void init_hwcap(void)
-{
-	asm volatile ("cpuid" : "=d"(elf_aux_hwcap) : "a"(1) : "%ecx", "%ebx");
-}
-
 void __noreturn unimplemented(void)
 {
 	panic("unimplemented");
@@ -41,7 +33,7 @@ static enum wsl9x_result wsl9x_start(struct wsl9x_start_param* start)
 
 	wsl9x_services = start->services;
 
-	init_hwcap();
+	wsl9x_init_cpu();
 	wsl9x_init_gdt();
 	wsl9x_init_mmu();
 

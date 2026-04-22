@@ -65,6 +65,7 @@ struct cpuinfo_um boot_cpu_data = {
 EXPORT_SYMBOL(boot_cpu_data);
 
 
+#ifndef CONFIG_WIN9X
 /* Changed in setup_arch, which is called in early boot */
 static char host_info[(__NEW_UTS_LEN + 1) * 5];
 
@@ -120,6 +121,7 @@ const struct seq_operations cpuinfo_op = {
 	.stop	= c_stop,
 	.show	= show_cpuinfo,
 };
+#endif
 
 /* Set in linux_main */
 unsigned long uml_physmem;
@@ -466,7 +468,9 @@ void __init setup_arch(char **cmdline_p)
 	paging_init();
 	strscpy(boot_command_line, command_line, COMMAND_LINE_SIZE);
 	*cmdline_p = command_line;
+#ifndef CONFIG_WIN9X
 	setup_hostinfo(host_info, sizeof host_info);
+#endif
 	prefill_possible_map();
 
 	if (os_getrandom(rng_seed, sizeof(rng_seed), 0) == sizeof(rng_seed)) {

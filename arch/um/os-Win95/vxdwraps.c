@@ -93,3 +93,18 @@ bool VMM_Call_When_Thread_Switched(void* callback)
 		: "S"(callback));
 	return !carry;
 }
+
+void VMM_Get_Machine_Info(struct VMM_Machine_Info* info)
+{
+	u32 eax, ebx, ecx, edx;
+	__asm__ volatile(VMM_CALL(0x00bb)
+		: "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx));
+
+	info->msdos_ver_major = eax >> 8;
+	info->msdos_ver_minor = eax & 0xff;
+	info->msdos_oem_serial = ebx >> 8;
+	info->machine_model = ebx;
+	info->machine_type_flags = ebx >> 16;
+	info->sys_config_params = ecx;
+	info->equipment_flags = edx;
+}

@@ -6,6 +6,7 @@ HOST_DIR := arch/$(HEADER_ARCH)
 
 obj-y = \
 	console.o \
+	cpu.o \
 	irq.o \
 	main.o \
 	mmu.o \

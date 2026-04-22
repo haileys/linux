@@ -92,18 +92,6 @@ ssize_t os_getrandom(void *buf, size_t len, unsigned int flags)
 	return len;
 }
 
-void setup_hostinfo(char *buf, int len)
-{
-	/* TODO more hostinfo in here */
-	sized_strscpy(buf, "Win9x", len);
-}
-
-void setup_machinename(char *machine_out)
-{
-	/* TODO return actual arch level here */
-	sized_strscpy(machine_out, "i386", 64);
-}
-
 /* logging */
 
 /*
