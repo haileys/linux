@@ -17,9 +17,6 @@ obj-y = \
 	string.o \
 	vxdwraps.o
 
-# obj-y += boot_console.o
-# obj-y += dos_tty.o
-
 CFLAGS_console.o += -I $(srctree)/drivers/tty/hvc
 
 USER_OBJS := $(user-objs-y)
