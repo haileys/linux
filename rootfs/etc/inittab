@@ -1,0 +1,4 @@
+hvc0::once:/bin/sh
+hvc1::once:/bin/sh
+hvc2::once:/bin/sh
+hvc3::once:/bin/sh

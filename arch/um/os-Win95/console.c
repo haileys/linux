@@ -1,11 +1,10 @@
+#include <linux/interrupt.h>
 #include <linux/console.h>
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/irq.h>
 #include <hvc_console.h>
 #include <wsl9x.h>
-
-static struct hvc_struct *wsl9x_console_dev;
 
 static const struct hv_ops wsl9x_console_ops = {
 	.get_chars = WSL9X_Console_Get,
@@ -17,8 +16,11 @@ static const struct hv_ops wsl9x_console_ops = {
 
 static int __init wsl9x_console_init(void)
 {
-	wsl9x_console_dev = hvc_alloc(0, WSL9X_IRQ_CONSOLE, &wsl9x_console_ops, 4);
-	BUG_ON(!wsl9x_console_dev);
+	for (int idx = 0; idx < 4; idx++) {
+		struct hvc_struct* con = hvc_alloc(idx, WSL9X_IRQ_CONSOLE, &wsl9x_console_ops, 128);
+		BUG_ON(IS_ERR(con));
+		con->flags |= IRQF_SHARED;
+	}
 
 	return 0;
 }

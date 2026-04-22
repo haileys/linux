@@ -14,5 +14,6 @@ file /bin/fastfetch ../fastfetch/build/fastfetch.stripped 0755 0 0
 dir /etc 0755 0 0
 file /etc/passwd rootfs/etc/passwd 0644 0 0
 file /etc/hostname rootfs/etc/hostname 0644 0 0
+file /etc/inittab rootfs/etc/inittab 0644 0 0
 
 file /boot.sh rootfs/boot.sh 0755 0 0
