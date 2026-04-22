@@ -80,8 +80,8 @@ static int show_cpuinfo(struct seq_file *m, void *v)
 #endif
 
 	seq_printf(m, "processor\t: %d\n", i);
-	seq_printf(m, "vendor_id\t: User Mode Linux\n");
-	seq_printf(m, "model name\t: UML\n");
+	seq_printf(m, "vendor_id\t: WSL9x\n");
+	seq_printf(m, "model name\t: WSL9x\n");
 	seq_printf(m, "mode\t\t: skas\n");
 	seq_printf(m, "host\t\t: %s\n", host_info);
 	seq_printf(m, "fpu\t\t: %s\n", str_yes_no(cpu_has(&boot_cpu_data, X86_FEATURE_FPU)));

@@ -1,10 +1,10 @@
 #include <linux/compiler_types.h>
 #include <wsl9x.h>
-#include <wsl9x/vmm.h>
 #include <wsl9x/descriptor.h>
 #include <wsl9x/mem.h>
 #include <wsl9x/task.h>
 #include <wsl9x/time.h>
+#include <wsl9x/vmm.h>
 
 #define VXD_INT_(service) "int $0x20\n" ".long " #service "\n"
 #define VXD_INT(service) VXD_INT_(service)
