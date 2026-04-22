@@ -7,6 +7,8 @@ HOST_DIR := arch/$(HEADER_ARCH)
 obj-y = \
 	console.o \
 	cpu.o \
+	hostfs.o \
+	ifsmgr.o \
 	irq.o \
 	main.o \
 	mmu.o \
@@ -18,6 +20,7 @@ obj-y = \
 	vxdwraps.o
 
 CFLAGS_console.o += -I $(srctree)/drivers/tty/hvc
+CFLAGS_hostfs.o += -I $(srctree)/fs/hostfs
 
 USER_OBJS := $(user-objs-y)
 

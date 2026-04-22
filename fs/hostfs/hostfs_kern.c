@@ -73,7 +73,7 @@ static int __init hostfs_args(char *options, int *add)
 		if (*options != '\0') {
 			if (!strcmp(options, "append"))
 				append = 1;
-			else printf("hostfs_args - unsupported option - %s\n",
+			else printk(KERN_ERR "hostfs_args - unsupported option - %s\n",
 				    options);
 		}
 		options = ptr;
@@ -975,6 +975,25 @@ static const struct fs_parameter_spec hostfs_param_specs[] = {
 	{}
 };
 
+static char* join_host_root(struct hostfs_fs_info *fsi, const char* host_root)
+{
+#ifdef CONFIG_WIN9X
+	if (strcmp(fsi->host_root_path, "/") != 0)
+		goto join;
+
+	if (strlen(host_root) < 2)
+		goto join;
+
+	if (!isalpha(host_root[0]) || host_root[1] != ':')
+		goto join;
+
+	return kasprintf(GFP_KERNEL, "%s", host_root);
+#endif
+
+join:
+	return kasprintf(GFP_KERNEL, "%s%s", fsi->host_root_path, host_root);
+}
+
 static int hostfs_parse_param(struct fs_context *fc, struct fs_parameter *param)
 {
 	struct hostfs_fs_info *fsi = fc->s_fs_info;
@@ -991,8 +1010,7 @@ static int hostfs_parse_param(struct fs_context *fc, struct fs_parameter *param)
 		host_root = param->string;
 		if (!*host_root)
 			break;
-		tmp_root = kasprintf(GFP_KERNEL, "%s%s",
-				     fsi->host_root_path, host_root);
+		tmp_root = join_host_root(fsi, host_root);
 		if (!tmp_root)
 			return -ENOMEM;
 		kfree(fsi->host_root_path);
@@ -1012,7 +1030,7 @@ static int hostfs_parse_monolithic(struct fs_context *fc, void *data)
 	if (host_root == NULL)
 		return 0;
 
-	tmp_root = kasprintf(GFP_KERNEL, "%s%s", fsi->host_root_path, host_root);
+	tmp_root = join_host_root(fsi, host_root);
 	if (!tmp_root)
 		return -ENOMEM;
 	kfree(fsi->host_root_path);
