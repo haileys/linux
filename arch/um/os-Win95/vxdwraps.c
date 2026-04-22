@@ -74,6 +74,9 @@ __naked uint32_t VMM_CopyPageTable(uint32_t pagenum, uint32_t npages, uint32_t* 
 __naked HCONTEXT VMM_ContextCreate(void)
 	DEF_VMM_JUMP(0x0123)
 
+__naked u32 VMM_ContextDestroy(HCONTEXT ctx)
+	DEF_VMM_JUMP(0x0124)
+
 __naked HCONTEXT VMM_ContextSwitch(HCONTEXT new_context)
 	DEF_VMM_JUMP(0x0132)
 

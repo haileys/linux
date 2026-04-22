@@ -93,4 +93,15 @@ int init_new_context(struct task_struct *task, struct mm_struct *mm)
 
 void destroy_context(struct mm_struct *mm)
 {
+	HCONTEXT ctx = xchg(&mm->context.handle, 0);
+	if (!ctx) {
+		return;
+	}
+
+	// must call ContextDestroy twice to delete a memory context -
+	// first from within the context with 0 arg, then again from outside the context
+	HCONTEXT prev = VMM_ContextSwitch(ctx);
+	VMM_ContextDestroy(0);
+	VMM_ContextSwitch(prev);
+	VMM_ContextDestroy(ctx);
 }
