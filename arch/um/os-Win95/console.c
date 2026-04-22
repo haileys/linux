@@ -17,7 +17,7 @@ static const struct hv_ops wsl9x_console_ops = {
 
 static int __init wsl9x_console_init(void)
 {
-	wsl9x_console_dev = hvc_alloc(0, WSL9X_IRQ_CONSOLE, &wsl9x_console_ops, 16);
+	wsl9x_console_dev = hvc_alloc(0, WSL9X_IRQ_CONSOLE, &wsl9x_console_ops, 4);
 	BUG_ON(!wsl9x_console_dev);
 
 	return 0;
