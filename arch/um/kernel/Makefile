@@ -18,18 +18,17 @@ obj-y = exec.o exitcode.o ksyms.o mem.o physmem.o \
 	process.o ptrace.o reboot.o sigio.o \
 	signal.o sysrq.o tlb.o trap.o \
 	um_arch.o umid.o kmsg_dump.o capflags.o skas/
-obj-y += load_file.o
 
-obj-os-Linux = config.o irq.o time.o
+obj-os-Linux = config.o irq.o load_file.o time.o
 obj-os-Win9x = time_win9x.o
 
 ifeq ($(CONFIG_WIN9X),y)
 obj-y += $(obj-os-Win9x)
 else
 obj-y += $(obj-os-Linux)
+obj-$(CONFIG_BLK_DEV_INITRD) += initrd.o
 endif
 
-obj-$(CONFIG_BLK_DEV_INITRD) += initrd.o
 obj-$(CONFIG_GPROF)	+= gprof_syms.o
 obj-$(CONFIG_OF) += dtb.o
 obj-$(CONFIG_EARLY_PRINTK) += early_printk.o
