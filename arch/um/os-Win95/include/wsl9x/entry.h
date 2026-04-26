@@ -25,7 +25,8 @@ enum wsl9x_result {
 enum wsl9x_irq {
 	// leave 0 undefined
 	WSL9X_IRQ_CONSOLE = 1,
-	WSL9X_NR_IRQS = 2,
+	WSL9X_IRQ_TIMER = 2,
+	WSL9X_NR_IRQS = 3,
 };
 
 struct wsl9x_start_param {

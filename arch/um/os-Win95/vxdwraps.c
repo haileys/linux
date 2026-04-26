@@ -41,6 +41,9 @@ __naked ssize_t WSL9X_Console_Put(u32 vtermno, const u8* buf, size_t len)
 __naked ssize_t WSL9X_Console_Get(u32 vtermno, u8* buf, size_t len)
 	DEF_WSL9X_JUMP(WSL9X__CONSOLE_GET)
 
+__naked void VMM_Cancel_Time_Out(HEVENT handle)
+	DEF_VMM_JUMP(0x003e)
+
 __naked u32 VMM_SetDescriptor(uint16_t selector, VMM_VMCB* vm, uint32_t desc_hi, uint32_t desc_lo, uint32_t flags)
 	DEF_VMM_JUMP(0x007c)
 
@@ -116,4 +119,22 @@ void VMM_Get_Machine_Info(struct VMM_Machine_Info* info)
 	info->machine_type_flags = ebx >> 16;
 	info->sys_config_params = ecx;
 	info->equipment_flags = edx;
+}
+
+HEVENT VMM_Set_Global_Time_Out(u32 millis, void* callback, void* data)
+{
+    HEVENT out;
+    __asm__ volatile(VMM_CALL(0x003c)
+        : "=S"(out)
+        : "a"(millis), "d"(data), "S"(callback));
+    return out;
+}
+
+HEVENT VMM_Set_Async_Time_Out(u32 millis, VMM_TimeOutCallback callback, void* data)
+{
+    HEVENT out;
+    __asm__ volatile(VMM_CALL(0x00fe)
+        : "=S"(out)
+        : "a"(millis), "d"(data), "S"(callback));
+    return out;
 }

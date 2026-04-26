@@ -1,3 +1,5 @@
+#include "linux/spinlock_types.h"
+#include "linux/time-internal.h"
 #include <linux/clockchips.h>
 #include <linux/clocksource.h>
 #include <linux/delay.h>
@@ -11,64 +13,79 @@
 #include <wsl9x.h>
 #include <wsl9x/time.h>
 
-/*
-static const TIMER_INTERVAL_MSEC = (NSEC_PER_SEC / HZ) / NSEC_PER_MSEC;
+static const ulong TIMER_INTERVAL_MSEC = (NSEC_PER_SEC / HZ) / NSEC_PER_MSEC;
 
-static VMM_TIMEOUT_HANDLE timeout_handle = NULL;
-static bool is_periodic = false;
+static HEVENT timeout = NULL;
+static spinlock_t timeout_lock;
 
-static void win9x_set_timeout(void);
+static bool running = false;
 
-static void _vmm_timer_callback win9x_timeout_callback(uint32_t millis_late, void* ctx)
+// static void win9x_set_timeout(void);
+
+static void _vmm_timer_callback win9x_timeout_callback(uint32_t millis_late, void* data)
 {
-	timeout_handle = NULL;
-	if (is_periodic) {
-		win9x_set_timeout();
+	timeout = 0;
+
+	if (running) {
+		timeout = VMM_Set_Async_Time_Out(TIMER_INTERVAL_MSEC, win9x_timeout_callback, data);
 	}
+
+	struct clock_event_device *c = data;
+	c->event_handler(c);
+
 }
 
-static void win9x_set_timeout(void)
-{
-	if (!timeout_handle) {
-		timeout_handle = VMM_Set_Async_Time_Out(TIMER_INTERVAL_MSEC, NULL, win9x_timeout_callback);
-	}
-}
+// static void win9x_set_timeout(void)
+// {
+// 	if (!timeout_handle) {
+// 		timeout_handle = VMM_Set_Async_Time_Out(TIMER_INTERVAL_MSEC, NULL, win9x_timeout_callback);
+// 	}
+// }
 
-static void win9x_cancel_timeout(void)
-{
-	VMM_TIMEOUT_HANDLE handle = NULL;
-	handle = xchg(&timeout_handle, handle);
-	VMM_Cancel_Time_Out(handle);
-}
+// static void win9x_cancel_timeout(void)
+// {
+// 	VMM_TIMEOUT_HANDLE handle = NULL;
+// 	handle = xchg(&timeout_handle, handle);
+// 	VMM_Cancel_Time_Out(handle);
+// }
 
 static int win9x_timer_shutdown(struct clock_event_device *c)
 {
-	win9x_cancel_timeout();
+	running = false;
+
+	HEVENT handle;
+	scoped_guard(spinlock_irqsave, &timeout_lock) {
+		handle = xchg(&timeout, 0);
+	}
+
+	if (handle) {
+		VMM_Cancel_Time_Out(handle);
+	}
+
+	return 0;
 }
 
 static int win9x_timer_set_periodic(struct clock_event_device *c)
 {
-	is_periodic = true;
-	win9x_set_timeout();
+	running = true;
+	timeout = VMM_Set_Async_Time_Out(TIMER_INTERVAL_MSEC, win9x_timeout_callback, c);
+	return 0;
 }
 
 static int win9x_timer_one_shot(struct clock_event_device *c)
 {
-	is_periodic = false;
-	win9x_set_timeout();
+	unimplemented();
 }
 
 static int win9x_timer_next_event(unsigned long delta, struct clock_event_device *c)
 {
-	is_periodic = false;
-	win9x_set_timeout(); // TODO what to do with delta?
+	unimplemented();
 }
 
 static struct clock_event_device win9x_clockevent = {
 	.name			= "win9x-timer",
 	.rating			= 250,
-	.features		= CLOCK_EVT_FEAT_PERIODIC |
-				  CLOCK_EVT_FEAT_ONESHOT,
+	.features		= CLOCK_EVT_FEAT_PERIODIC,
 	.set_state_shutdown	= win9x_timer_shutdown,
 	.set_state_periodic	= win9x_timer_set_periodic,
 	.set_state_oneshot	= win9x_timer_one_shot,
@@ -78,22 +95,23 @@ static struct clock_event_device win9x_clockevent = {
 	.max_delta_ticks	= 0xffffffff,
 	.min_delta_ns		= TIMER_MIN_DELTA,
 	.min_delta_ticks	= TIMER_MIN_DELTA, // microsecond resolution should be enough for anyone, same as 640K RAM
-	.irq			= 0,
+	.irq			= -1,
 	.mult			= 1,
 };
 
 static irqreturn_t win9x_timer_irq(int irq, void *dev)
 {
 	struct clock_event_device *evt = &win9x_clockevent;
-	evt->event_handler(evt);
+	// evt->event_handler(evt);
 
 	return IRQ_HANDLED;
 }
-*/
 
 static u64 win9x_timer_read(struct clocksource* cs)
 {
-	return VTD_Get_Real_Time();
+	u64 time = VTD_Get_Real_Time();
+	// printk(KERN_WARNING "time=%08x%08x\n", (u32)(time >> 32), (u32)time);
+	return time;
 }
 
 static struct clocksource win9x_clocksource = {
@@ -108,13 +126,13 @@ static void __init win9x_timer_init(void)
 {
 	int err;
 
-	// err = request_irq(TIMER_IRQ, win9x_timer_irq, IRQF_TIMER, "hr timer", NULL);
-	// if (err != 0) {
-	// 	panic("win9x_timer_init: request_irq error: %d", err);
-	// }
+	err = request_irq(WSL9X_IRQ_TIMER, win9x_timer_irq, IRQF_TIMER, "timer", NULL);
+	if (err != 0) {
+		panic("win9x_timer_init: request_irq error: %d", err);
+	}
 
-	// win9x_clockevent.cpumask = cpumask_of(smp_processor_id());
-	// clockevents_register_device(&win9x_clockevent);
+	win9x_clockevent.cpumask = cpumask_of(smp_processor_id());
+	clockevents_config_and_register(&win9x_clockevent, HZ, TIMER_MIN_DELTA, LONG_MAX);
 
 	err = clocksource_register_hz(&win9x_clocksource, WIN9X_REAL_CLOCK_HZ);
 	if (err) {
@@ -124,15 +142,16 @@ static void __init win9x_timer_init(void)
 
 void __init time_init(void)
 {
+	spin_lock_init(&timeout_lock);
 	late_time_init = win9x_timer_init;
-	lpj_fine = WIN9X_REAL_CLOCK_HZ / HZ;
+	// lpj_fine = WIN9X_REAL_CLOCK_HZ / HZ;
 }
 
 void read_persistent_clock64(struct timespec64 *ts)
 {
-	u64 msecs = VTD_Get_Date_And_Time() + WIN9X_WALL_CLOCK_EPOCH;
+	u64 msecs = VTD_Get_Date_And_Time() + WIN9X_WALL_CLOCK_EPOCH * MSEC_PER_SEC;
 
-	u32 remainder = 0;
-	ts->tv_sec = div_u64_rem(msecs, MSEC_PER_SEC, &remainder);
-	ts->tv_nsec = remainder * NSEC_PER_MSEC;
+	// do_div modifies tv_sec in place:
+	ts->tv_sec = msecs;
+	ts->tv_nsec = do_div(ts->tv_sec, MSEC_PER_SEC);
 }
