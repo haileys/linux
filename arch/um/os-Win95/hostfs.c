@@ -4,6 +4,8 @@
 #include <wsl9x/ifsmgr.h>
 #include "hostfs.h"
 
+#define BLKSIZE 512
+
 int stat_file(const char *path, struct hostfs_stat *p, int fd)
 {
 	int attr = IFSMgr_GetFileAttributes(path);
@@ -14,6 +16,13 @@ int stat_file(const char *path, struct hostfs_stat *p, int fd)
 	int file = IFSMgr_OpenCreateFile(IFS_OPEN_READONLY, 0, IFS_OPEN_IF_EXIST, path);
 	if (file < 0) {
 		return file;
+	}
+
+	uint size = 0;
+	int rc = IFSMgr_GetFileSize(file, &size);
+	IFSMgr_CloseFile(file);
+	if (rc < 0) {
+		return rc;
 	}
 
 	p->ino = get_next_ino();
@@ -28,6 +37,9 @@ int stat_file(const char *path, struct hostfs_stat *p, int fd)
 	if (attr & FILE_ATTRIBUTE_ARCHIVE) {
 		p->mode |= S_IXUGO;
 	}
+
+	p->blksize = 512;
+	p->blocks = BLKSIZE;
 }
 
 extern int access_file(char *path, int r, int w, int x)
