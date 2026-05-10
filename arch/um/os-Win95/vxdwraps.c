@@ -1,6 +1,7 @@
 #include <linux/compiler_types.h>
 #include <wsl9x.h>
 #include <wsl9x/descriptor.h>
+#include <wsl9x/ifsmgr.h>
 #include <wsl9x/mem.h>
 #include <wsl9x/task.h>
 #include <wsl9x/time.h>
@@ -15,8 +16,10 @@
 
 #define VMM_DEVICE 	DEVICE_ID(0x0001)
 #define VTD_DEVICE 	DEVICE_ID(0x0005)
+#define IFSMGR_DEVICE	DEVICE_ID(0x0040)
 #define WSL9X_DEVICE	DEVICE_ID(0x8381)
 
+#define VXD_CALL(device, service) VXD_INT((device) | (service))
 #define VMM_CALL(service) VXD_INT(VMM_DEVICE | (service))
 
 #define DEF_VXD_JUMP(device, service) { __asm__ volatile (VXD_INT(JUMP_FLAG | (device) | (service))); }
@@ -116,4 +119,12 @@ void VMM_Get_Machine_Info(struct VMM_Machine_Info* info)
 	info->machine_type_flags = ebx >> 16;
 	info->sys_config_params = ecx;
 	info->equipment_flags = edx;
+}
+
+bool IFSMgr_Ring0_FileIO(struct ifs_regs* regs)
+{
+	int carry;
+	__asm__ volatile(VXD_CALL(IFSMGR_DEVICE, 0x0032)
+		: "=@ccc"(carry), "+a"(regs->eax), "+b"(regs->ebx), "+c"(regs->ecx), "+d"(regs->edx), "+S"(regs->esi));
+	return !carry;
 }

@@ -5,8 +5,10 @@ ARCH_DIR := arch/um
 HOST_DIR := arch/$(HEADER_ARCH)
 
 obj-y = \
+	block.o \
 	console.o \
 	cpu.o \
+	ifsmgr.o \
 	irq.o \
 	main.o \
 	mmu.o \
